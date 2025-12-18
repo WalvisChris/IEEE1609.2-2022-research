@@ -13,7 +13,6 @@ Uint3   ::= INTEGER (0..7)
 
 Uint8   ::= INTEGER (0..255)
 
-
 Uint16  ::= INTEGER (0..65535)
 
 Uint32  ::= INTEGER (0..4294967295)
