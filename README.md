@@ -6,6 +6,7 @@
 - 6.6 Contributed HeaderInfo extensions
 - 7.3 CRL Verification Entity specification
 - 7.4 CRL IEEE 1609.2 Security envelope
+- 8.4 Datastructures
 
 # 6.2 Basic types
 ```asn1
@@ -34,7 +35,7 @@ SequenceOfUint16        ::= SEQUENCE OF Uint16
 # 6.3 Security services protocol data units (SPDUs)
 ```asn1
 Ieee1609Dot2Data ::= SEQUENCE {
-    protoclVerion   Uint8(3),
+    protoclVersion   Uint8(3),
     content         Ieee1609Dot2Content
 }
 
@@ -80,7 +81,7 @@ HashedData::= CHOICE {
 }
 
 HeaderInfo ::= SEQUENCE {
-    psid Psid,
+    psid                    Psid,
     generationTime          Time64 OPTIONAL,
     expiryTime              Time64 OPTIONAL,
     generationLocation      ThreeDLocation OPTIONAL,
@@ -130,8 +131,8 @@ UnknownLongitude ::= OneEightyDegreeInt (unknown)
 Elevation ::= Uint16
 
 MissingCrlIdentifier ::= SEQUENCE {
-    cracaId HashedId3,
-    crlSeries ,
+    cracaId     HashedId3,
+    crlSeries   CrlSeries,
     ...
 }
 
@@ -166,7 +167,7 @@ BasePublicEncryptionKey ::= CHOICE {
     ecencSm2        EccP256CurvePoint
 }
 
-ccP256CurvePoint::= CHOICE {
+EccP256CurvePoint::= CHOICE {
     x-only          OCTET STRING (SIZE (32)),
     fill            NULL,
     compressed-y-0  OCTET STRING (SIZE (32)),
