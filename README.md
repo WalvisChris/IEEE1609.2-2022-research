@@ -10,15 +10,26 @@
 # 6.2 Basic types
 ```asn1
 Uint3   ::= INTEGER (0..7)
+
 Uint8   ::= INTEGER (0..255)
+
+
 Uint16  ::= INTEGER (0..65535)
+
 Uint32  ::= INTEGER (0..4294967295)
+
 Uint64  ::= INTEGER (0..18446744073709551615)
+
 IValue  ::= Uint16
+
 Opaque  ::= OCTET STRING
+
 SequenceOfOctetString   ::= SEQUENCE (SIZE (0..MAX)) OF OCTET STRING (SIZE(0..MAX))
+
 SequenceOfUint3         ::= SEQUENCE OF Uint3
+
 SequenceOfUint8         ::= SEQUENCE OF Uint8
+
 SequenceOfUint16        ::= SEQUENCE OF Uint16
 ```
 # 6.3 Security services protocol data units (SPDUs)
