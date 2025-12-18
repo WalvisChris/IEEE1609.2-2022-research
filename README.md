@@ -264,3 +264,186 @@ Countersignature ::= IeeI1609Dot2Data (WITH COMPONENTS {...,
     })
 })
 ```
+# 6.4 Certificates
+```asn1
+Certificate ::= CertificateBase (ImplicitCertificate | ExplicitCertificate)
+SequenceOfCertificate ::= SEQUENCE OF Certificate
+CertificateBase ::= SEQUENCE {
+    version     Uint8(3),
+    type        CertificateType,
+    issuer      IssuerIdentifier,
+    toBeSigned  ToBeSignedCertificate,
+    signature   Signature OPTIONAL
+}
+CertificateType ::= ENUMERATED {
+    explicit,
+    implicit,
+    ...
+}
+ImplicitCertificate ::= CertificateBase (WITH COMPONENTS {...,
+    type(implicit),
+    toBeSigned(WITH COMPONENTS {...,
+    verifyKeyIndicator(WITH COMPONENTS {reconstructionValue})
+    }),
+    signature ABSENT
+})
+ExplicitCertificate ::= CertificateBase (WITH COMPONENTS {...,
+    type(explicit),
+    toBeSigned(WITH COMPONENTS {...,
+    verifyKeyIndicator(WITH COMPONENTS {verificationKey})
+    }),
+    signature PRESENT
+})
+IssuerIdentifier ::= CHOICE {
+    sha256AndDigest HashedId8,
+    self HashAlgorithm,
+    ...,
+    sha384AndDigest HashedId8,
+    sm3AndDigest HashedId8
+}
+ToBeSignedCertificate ::= SEQUENCE {
+    id                      CertificateId,
+    cracaId                 HashedId3,
+    crlSeries               CrlSeries,
+    validityPeriod          ValidityPeriod,
+    region                  GeographicRegion OPTIONAL,
+    assuranceLevel          SubjectAssurance OPTIONAL,
+    appPermissions          SequenceOfPsidSsp OPTIONAL,
+    certIssuePermissions    SequenceOfPsidGroupPermissions OPTIONAL,
+    certRequestPermissions  SequenceOfPsidGroupPermissions OPTIONAL,
+    canRequestRollover      NULL OPTIONAL,
+    encryptionKey           PublicEncryptionKey OPTIONAL,
+    verifyKeyIndicator      VerificationKeyIndicator,
+    ...,
+    flags                   BIT STRING {usesCubk (0)} (SIZE (8)) OPTIONAL,
+    appExtensions           SequenceOfAppExtensions,
+    certIssueExtensions     SequenceOfCertIssueExtensions,
+    certRequestExtension
+}
+CertificateId ::= CHOICE {
+    linkageData LinkageData,
+    name        Hostname,
+    binaryId    OCTET STRING(SIZE(1..64)),
+    none        NULL,
+    ...
+}
+LinkageData ::= SEQUENCE {
+    iCert               Ivalue,
+    linkage-value       LinkageValue,
+    group-linkage-value GroupLinkageValue OPTIONAL
+}
+LinkageValue ::= OCTET STRING (SIZE(9))
+GroupLinkageValue ::= SEQUENCE {
+    jValue  OCTET STRING (SIZE(4)),
+    value   OCTET STRING (SIZE(9))
+}
+Hostname ::= UTF8String (SIZE(0..255))
+ValidityPeriod ::= SEQUENCE {
+    start       Time32,
+    duration    Duration
+}
+Time32 ::= Uint32
+Duration ::= CHOICE {
+    microseconds    Uint16,
+    milliseconds    Uint16,
+    seconds         Uint16,
+    minutes         Uint16,
+    hours           Uint16,
+    sixtyHours      Uint16,
+    years           Uint16
+} 
+GeographicRegion ::= CHOICE {
+    circularRegion      CircularRegion,
+    rectangularRegion   SequenceOfRectangularRegion,
+    polygonalRegion     PolygonalRegion,
+    identifiedRegion    SequenceOfIdentifiedRegion,
+    ...
+}
+CircularRegion ::= SEQUENCE {
+    center TwoDLocation,
+    radius Uint16
+}
+TwoDLocation ::= SEQUENCE {
+    latitude    Latitude,
+    longitude   Longitude
+}
+RectangularRegion ::= SEQUENCE {
+    northWest TwoDLocation,
+    southEast TwoDLocation
+}
+PolygonalRegion ::= SEQUENCE SIZE(3..MAX) OF TwoDLocation
+IdentifiedRegion ::= CHOICE {
+    countryOnly             UnCountryId,
+    countryAndRegions       CountryAndRegions,
+    countryAndSubregions    CountryAndSubregions,
+    ...
+}
+UnCountryId ::= Uint16
+CountryAndRegions ::= SEQUENCE {
+    country UnCountryId,
+    regions SequenceOfUint8
+}
+CountryAndSubregions ::= SEQUENCE {
+    country             UnCountryId,
+    regionAndSubregions SequenceOfRegionAndSubregions
+}
+egionAndSubregions ::= SEQUENCE {
+ region     Uint8,
+ subregions SequenceOfUint16
+}
+SequenceOfRegionAndSubregions ::= SEQUENCE OF RegionAndSubregions
+SubjectAssurance ::= OCTET STRING (SIZE(1))
+PsidSsp ::= SEQUENCE {
+    psid    Psid,
+    ssp     ServiceSpecificPermissions OPTIONAL
+}
+SequenceOfPsidSsp ::= SEQUENCE OF PsidSsp
+ServiceSpecificPermissions ::= CHOICE {
+    opaque      OCTET STRING (SIZE(0..MAX)),
+    ...,
+    bitmapSsp   BitmapSsp
+}
+BitmapSsp ::= OCTET STRING (SIZE(0..31))
+PsidGroupPermissions ::= SEQUENCE {
+    subjectPermissions  SubjectPermissions,
+    minChainLength      INTEGER DEFAULT 1,
+    chainLengthRange    INTEGER DEFAULT 0,
+    eeType              EndEntityType DEFAULT {app}
+}
+SequenceOfPsidGroupPermissions ::= SEQUENCE OF PsidGroupPermissions
+SubjectPermissions ::= CHOICE {
+    explicit    SequenceOfPsidSspRange,
+    all         NULL,
+    ...
+}
+EndEntityType ::= BIT STRING {app (0), enroll (1)} (SIZE (8)) (ALL EXCEPT {})
+PsidSspRange ::= SEQUENCE {
+    psid        Psid,
+    sspRange    SspRange OPTIONAL
+}
+SequenceOfPsidSspRange ::= SEQUENCE OF PsidSspRange
+SspRange ::= CHOICE {
+    opaque          SequenceOfOctetString,
+    all             NULL,
+    ...,
+    bitmapSspRange  BitmapSspRange
+}
+BitmapSspRange ::= SEQUENCE {
+    sspValue    OCTET STRING (SIZE(1..32)),
+    sspBitmask  OCTET STRING (SIZE(1..32))
+}
+SequenceOfAppExtensions ::= SEQUENCE (SIZE(1..MAX)) OF AppExtension
+ppExtension ::= SEQUENCE {
+    id      CERT-EXT-TYPE.&id({SetCertExtensions}),
+    content CERT-EXT-TYPE.&App({SetCertExtensions}{@.id})
+}
+SequenceOfCertIssueExtensions ::= SEQUENCE (SIZE(1..MAX)) OF CertIssueExtension
+CertIssueExtension ::= SEQUENCE {
+    id CERT-EXT-TYPE.&id({SetCertExtensions}),
+    permissions CHOICE {
+        specific CERT-EXT-TYPE.&Issue({SetCertExtensions}{@.id}),
+        all NULL
+    }
+}
+6.4.41...
+```
