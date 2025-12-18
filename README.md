@@ -1,3 +1,12 @@
+# Table of Content
+### 6.2 Basic types
+### 6.3 SPDUs
+### 6.4 Certificates
+### 6.5 General HeaderInfo extension
+### 6.6 Contributed HeaderInfo extensions
+### 7.3 CRL Verification Entity specification
+### 7.4 CRL IEEE 1609.2 Security envelope
+
 # 6.2 Basic types
 ```asn1
 Uint3   ::= INTEGER (0..7)
@@ -12,7 +21,7 @@ SequenceOfUint3         ::= SEQUENCE OF Uint3
 SequenceOfUint8         ::= SEQUENCE OF Uint8
 SequenceOfUint16        ::= SEQUENCE OF Uint16
 ```
-# 6.3 SPDUs 
+# 6.3 Security services protocol data units (SPDUs)
 ```asn1
 Ieee1609Dot2Data ::= SEQUENCE {
     protoclVerion   Uint8(3),
@@ -445,5 +454,238 @@ CertIssueExtension ::= SEQUENCE {
         all NULL
     }
 }
-6.4.41...
+SequenceOfCertRequestExtensions ::= SEQUENCE (SIZE(1..MAX)) OF CertRequestExtension
+CertRequestExtension ::= SEQUENCE {
+    id          CERT-EXT-TYPE.&id({SetCertExtensions}),
+    permissions CHOICE {
+        specific CERT-EXT-TYPE.&Req({SetCertExtensions}{@.id}),
+        all NULL
+    }  
+}
+CERT-EXT-TYPE ::= CLASS {
+    &id ExtId,
+    &App,
+    &Issue,
+    &Req
+}
+OperatingOrganizationId ::= OBJECT IDENTIFIER
+certExtId-OperatingOrganization ExtId ::= 1
+instanceOperatingOrganizationCertExtensions CERT-EXT-TYPE ::= {
+    ID      certExtId-OperatingOrganization
+    APP     OperatingOrganizationId
+    ISSUE   NULL
+    REQUEST NULL
+}
+SetCertExtensions CERT-EXT-TYPE ::= {
+    instanceOperatingOrganizationCertExtensions,
+    ...
+}
+VerificationKeyIndicator ::= CHOICE {
+    verificationKey     PublicVerificationKey,
+    reconstructionValue EccP256CurvePoint,
+    ...
+}
+PublicVerificationKey ::= CHOICE {
+    ecdsaNistP256           EccP256CurvePoint,
+    ecdsaBraIoolP256r1      EccP256CurvePoint,
+    ...,
+    ecdsaBrainpoolP384r1    EccP384CurvePoint,
+    ecdsaNistP384           EccP384CurvePoint,
+    ecsigSm2                EccP256CurvePoint
+}
+```
+# 6.5 General HeaderInfo extension
+```asn1
+Extension {EXT-TYPE : ExtensionTypes} ::= SEQUENCE {
+    id      EXT-TYPE.&extId({ExtensionTypes}),
+    content EXT-TYPE.&ExtContent({ExtensionTypes}{@.id})
+}
+EXT-TYPE ::= CLASS {
+    &extId ExtId,
+    &ExtContent
+}
+ExtId ::= INTEGER(0..255)
+Ieee1609ContributeHeaderInfoExtension ::= Extension{{Ieee1609HeaderInfoExtensions}}
+Ieee1609HeaderInfoExtensionId ::= ExtId
+p2pcd8ByteLearningRequestId Ieee1609HeaderInfoExtensionId ::= 1
+Ieee1609HeaderInfoExtensions EXT-TYPE ::= {
+    {HashedId8 IDENTIFIED BY p2pcd8ByteLearningRequestId},
+    ...
+}
+```
+# 6.6 Contributed HeaderInfo extensions
+```asn1
+EtsiOriginatingHeaderInfoExtension ::= Extension{{
+    EtsiTs103097HeaderInfoExtensions
+}}
+EtsiTs103097HeaderInfoExtensions EXT-TYPE ::= {
+    {EtsiTs102941CrlRequest 
+        IDENTIFIED BY etsiTs102941CrlRequestId} |
+    {EtsiTs102941DeltaCtlRequest
+        IDENTIFIIBY etsiTs102941DeltaCtlRequestId},
+    ...
+EtsiTs102941CrlRequest ::= NULL
+etsiTs102941CrlRequestId ExtId ::= 1
+EtsiTs102941DeltaCtlRequest ::= NULL
+etsiTs102941DeltaCtlRequestId ExtId ::= 2
+}
+```
+# 7.3 CRL Verification Entity specification
+CRL = Certificate Revocation List
+```asn1
+
+CrlContents ::= SEQUENCE {
+    version         Uint8 (1),
+    crlSeries       CrlSeries,
+    crlCraca        HashedId8,
+    issueDate       Time32,
+    nextCrl         Time32,
+    priorityInfo    CrlPriorityInfo,
+    typeSpecific    TypeSpecificCrlContents
+}
+TypeSpecificCrlContents ::= CHOICE {
+    fullHashCrl             ToBeSignedHashIdCrl,
+    deltaHashCrl            ToBeSignedHashIdCrl,
+    fullLinkedCrl           ToBeSignedLinkageValueCrl,
+    deltaLinkedCrl          ToBeSignedLinkageValueCrl,
+    ...,
+    fullLinkedCrlWithAlg    ToBeSignedLinkageValueCrlWithAlgIdentifier,
+    deltaLinkedCrlWithAlg   ToBeSignedLinkageValueCrlWithAlgIdentifier
+}
+CrlPriorityInfo ::= SEQUENCE {
+    priority Uint8 OPTIONAL,
+    ...
+}
+ToBeSignedHashIdCrl ::= SEQUENCE {
+    crlSerial   Uint32,
+    entries     SequenceOfHashBasedRevocationInfo,
+    ...
+}
+HashBasedRevocationInfo ::= SEQUENCE {
+    id      HashedId10,
+    expiry  Time32,
+    ...
+}
+ToBeSignedLinkageValueCrl ::= SEQUENCE {
+    iRev                Ivalue,
+    indexWithinI        Uint8,
+    individual          SequenceOfJMaxGroup OPTIONAL,
+    groups              SequenceOfGroupCrlEntry OPTIONAL,
+    ...,
+    groupsSingleSeed    SequenceOfGroupSingleSeedCrlEntry OPTIONAL
+}
+
+ToBeSignedLinkageValueCrlWithAlgIdentifier ::= SEQUENCE {
+    iRev                Ivalue,
+    indexWithinI        Uint8,
+    seedEvolution       SeedEvolutionFunctionIdentifier,
+    lvGeneration        LvGenerationFunctionIdentifier,
+    individual          SequenceOfJMaxGroup OPTIONAL,
+    groups              SequenceOfGroupCrlEntry OPTIONAL,
+    groupsSingleSeed    SequenceOfGroupSingleSeedCrlEntry OPTIONAL,
+    ...
+}
+JMaxGroup ::= SEQUENCE {
+    jmax        Uint8,
+    contents    SequenceOfLAGroup,
+    ...
+}
+SequenceOfJMaxGroup ::= SEQUENCE OF JMaxGroup
+LAGroup ::= SEQUENCE {
+    la1Id       LaId,
+    la2Id       LaId,
+    contents    SequenceOfIMaxGroup,
+    ...
+}
+SequenceOfLAGroup ::= SEQUENCE OF LAGroup
+
+IMaxGroup ::= SEQUENCE {
+    iMax        Uint16,
+    contents    SequenceOfIndividualRevocation,
+    ...,
+    singleSeed  SequenceOfLinkageSeed OPTIONAL
+}
+SequenceOfIMaxGroup ::= SEQUENCE OF IMaxGroup
+
+IndividualRevocation ::= SEQUENCE {
+    linkageSeed1 LinkageSeed,
+    linkageSeed2 LinkageSeed,
+    ...
+}
+SequenceOfIndividualRevocation ::= SEQUENCE (SIZE(0..MAX)) OF IndividualRevocation
+
+GroupCrlEntry ::= SEQUENCE {
+    iMax            Uint16,
+    la1Id           LaId,
+    linkageSeed1    LinkageSeed,
+    la2Id           LaId,
+    linkageSeed2    LinkageSeed,
+    ...
+}
+SequenceOfGroupCrlEntry ::= SEQUENCE OF GroupCrlEntry
+LaId ::= OCTET STRING (SIZE(2))
+LinkageSeed ::= OCTET STRING (SIZE(16))
+SequenceOfLinkageSeed ::= SEQUENCE OF LinkageSeed
+ExpansionAlgorithmIdentifier ::= ENUMERATED {
+    sha256ForI-aesForJ,
+    sm3ForI-sm4ForJ,
+    ...
+}
+
+GroupSingleSeedCrlEntry ::= SEQUENCE {
+    iMax        Uint16,
+    laId        LaId,
+    linkageSeed LinkageSeed
+}
+SequenceOfGroupSingleSeedCrlEntry ::= SEQUENCE OF GroupSingleSeedCrlEntry
+SeedEvolutionFunctionIdentifier ::= NULL
+LvGenerationFunctionIdentifier ::= NULL
+```
+# 7.4 CRL IEEE 1609.2 Security envelope
+```asn1
+CrlSsp::= SEQUENCE {
+    version         Uint8(1),
+    associatedCraca CracaType,
+    crls            PermissibleCrls,
+    ...
+}
+CracaType ::= ENUMERATED {isCraca, issuerIsCraca}
+PermissibleCrls ::= SEQUENCE OF CrlSeries
+CrlPsid ::= Psid(256)
+SecuredCrl ::= Ieee1609Dot2Data (WITH COMPONENTS {...,
+    content (WI COMPONENTS {
+        signedData (WIICOMPONENTS {...,
+            tbsData (WITH COMPONENTS {
+                payload (WITH COMPONENTS {...,
+                    data (WITH COMPONENTS {...,
+                        content (WITH COMPONENTS {
+                            unsecuredData (CONTAINING CrlContents)
+                        })
+                    })
+                }),
+                headerInfo (WITH COMPONENTS {...,
+                    psid                    (CrlPsid),
+                    generationTime          ABSENT,
+                    expiryTime              ABSENT,
+                    generationLocation      ABSENT,
+                    p2pcdLearningRequest    ABSENT,
+                    missingCrlIdentifier    ABSENT,
+                    encryptionKey           ABSENT
+                })
+            })
+        })
+    })
+})
+```
+# 8.4 Datastructures
+```asn1
+09dot2Peer2PeIDU ::= SEQUENCE {
+    version Uint8(1),
+    content CHOICE {
+        caCerts CaCertP2pPDU,
+        ...
+    }
+}
+CaCertP2pPDU ::= SEQUENCE OF Certificate
+
 ```
