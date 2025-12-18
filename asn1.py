@@ -210,4 +210,61 @@ RecipientInfo ::= CHOICE {
     certRecipInfo       PKRecipientInfo,
     signedDataRecipInfo PKRecipientInfo,
     rekRecipInfo        PKRecipientInfo
+}
+PreSharedKeyRecipientInfo ::= HashedId8
+SymmRecipientInfo ::= SEQUENCE {
+    recipientId HashedId8,
+    encKey      SymmetricCiphertext
+}
+PKRecipientInfo ::= SEQUENCE {
+    recipientId HashedId8,
+    encKey      EncryptedDataEncryptionKey
+}
+EncryptedDataEncryptionKey ::= CHOICE {
+    eciesNistP256           EciesP256EncryptedKey,
+    eciesBrainpoolP256r1    EciesP256EncryptedKey,
+    ...,
+    ecencSm2256             EcencP256EncryptedKey
+}
+EciesP256EncryptedKey ::= SEQUENCE {
+    v EccP256CurvePoint,
+    c OCTET STRING (SIZE (16)),
+    t OCTET STRING (SIZE (16))
+}
+EcencP256EncryptedKey ::= SEQUENCE {
+    v EccP256CurvePoint,
+    c OCTET STRING (SIZE (16)),
+    t OCTET STRING (SIZE (32))
+}
+SymmetricCiphertext ::= CHOICE {
+    aes128ccm   One28BitCcmCiphertext,
+    ...,
+    sm4Ccm      One28BitCcmCiphertext
+}
+One28BitCcmCiphertext ::= SEQUENCE {
+    nonce           OCTET STRING (SIZE (12)),
+    ccmCiphertext   Opaque
+}
+Countersignature ::= IeeI1609Dot2Data (WITH COMPONENTS {...,
+    content (WITH COMPONENTS {...,
+        signedData (WITH COMPONENTS {...,
+            tbsData (WITH COMPONENTS {...,
+                payload (WITH COMPONENTS {...,
+                    data ABSENT,
+                    extDataHash PRESENT
+                }),
+                headerInfo(WITH COMPONENTS {...,
+                    generationTime PRESENT,
+                    expiryTime ABSENT,
+                    generationLocation ABSENT,
+                    p2pcdLearningRequest ABSENT,
+                    missingCrlIdentifier ABSENT,
+                    encryptionKey ABSENT
+                })
+            })
+        })
+    })
+})
+
+--- 6.4 certificates ---
 """
