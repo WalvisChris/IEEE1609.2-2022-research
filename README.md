@@ -1,11 +1,11 @@
 # Table of Content
-### 6.2 Basic types
-### 6.3 SPDUs
-### 6.4 Certificates
-### 6.5 General HeaderInfo extension
-### 6.6 Contributed HeaderInfo extensions
-### 7.3 CRL Verification Entity specification
-### 7.4 CRL IEEE 1609.2 Security envelope
+- 6.2 Basic types
+- 6.3 SPDUs
+- 6.4 Certificates
+- 6.5 General HeaderInfo extension
+- 6.6 Contributed HeaderInfo extensions
+- 7.3 CRL Verification Entity specification
+- 7.4 CRL IEEE 1609.2 Security envelope
 
 # 6.2 Basic types
 ```asn1
