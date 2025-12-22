@@ -1,6 +1,7 @@
 # TODO  
 - fix univ.Choice  
-- replace some HashedId with OCTECT STRING  
+- replace some HashedId with UNIV OCTECT STRING  
+- replace some Uint with UNIV INTEGER  
 
 # Table of Content
 - 6.2 Basic types

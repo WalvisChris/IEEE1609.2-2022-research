@@ -691,10 +691,187 @@ class PublicVerificationKey(univ.Choice):
         # TODO more
     )
 
-class
-
 # --- 6.5 General Headerinfo extension ---
+class Extension(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('id', univ.ObjectIdentifier()),
+        namedtype.NamedTypes('content', univ.Any())
+    )
+
+# class EXT-TYPE()
+
+class ExtId(Uint8):
+    pass
+
+class Ieee1609ContributeHeaderInfoExtension(Extension):
+    pass
+
+class Ieee1609HeaderInfoExtensionId(ExtId):
+    pass
+
+# p2pcd8ByteLearningRequestId Ieee1609HeaderInfoExtensionId ::= 1
+
 # --- 6.6 Contributed Headerinfo extension ---
+class EtsiOriginatingHeaderInfoExtension(Extension):
+    pass
+
+# class EtsiTs103097HeaderInfoExtension EXT-TYPE()
+
+# class EtsiTs102941CrlRequest ::= Null
+
+# class etsiTs102941CrlRequestId ExtId ::= 1
+
+# class EtsiTs102941DeltaCtlRequest ::= Null
+
+# class etsiTs102941DeltaCtlRequestId ExtId ::= 2
+
 # --- 7.3 CRL Verification Entity specification ---
+class CRLContents(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('version', Uint8()),
+        namedtype.NamedType('crlSeries', CrlSeries()),
+        namedtype.NamedType('crlCraca', HashedId8()),
+        namedtype.NamedType('issueDate', Time32()),
+        namedtype.NamedType('nextCrl', Time32()),
+        namedtype.NamedType('priorityInfo', CrlPriorityInfo()),
+        namedtype.NamedType('typeSpecific', TypeSpecificCrlContents())
+    )
+
+class TypeSpecificContents(univ.Choice):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('fullHashCrl', ToBeSignedHashIdCrl()),
+        namedtype.NamedType('deltaHashCrl', ToBeSignedHashIdCrl()),
+        namedtype.NamedType('fullLinkedCrl', ToBeSignedLinkageValueCrl()),
+        namedtype.NamedType('deltaLinkedCrl', ToBeSignedLinkageValueCrl()),
+        namedtype.NamedType('fullLinkedCrlWithAlg', ToBeSignedLinkageValueCrlWithAlgIdentifier()),
+        namedtype.NamedType('deltaLinkedCrlWithAlg', ToBeSignedLinkageValueCrlWithAlgIdentifier())
+    )
+
+class CrlPriorityInfo(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.OptionalNamedType('priority', Uint8())
+        # TODO more
+    )
+
+class ToBeSignedHashIdCrl(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('crlSerials', Uint32()),
+        namedtype.NamedType('entries', SequenceOfHashBasedRevocationInfo())
+        # TODO more
+    )
+
+class HashBasedRevocationInfo(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('id', HashedId10()),
+        namedtype.NamedType('expiry', Time32())
+        # TODO more
+    )
+
+class ToBeSignedLinkageValueCrl(univ.Sequence):
+    componentType = namedtype.NamedType(
+        namedtype.NamedType('iRev', IValue()),
+        namedtype.NamedType('indexWithinI', Uint8()),
+        namedtype.OptionalNamedType('individual', SequenceOfJMaxGroup()),
+        namedtype.OptionalNamedType('groups', SequenceOfGroupCrlEntry()),
+        namedtype.OptionalNamedType('groupSingleSeed', SequenceOfGroupSingleSeedCrlEntry())
+        # TODO more
+    )
+
+class ToBeSignedLinkageValueCrlWithAlgIdentifier(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('iRev', IValue()),
+        namedtype.NamedType('indexWithinI', Uint8()),
+        namedtype.OptionalNamedType('individual', SequenceOfJMaxGroup()),
+        namedtype.OptionalNamedType('groups', SequenceOfGroupCrlEntry()),
+        namedtype.OptionalNamedType('groupSingleSeed', SequenceOfGroupSingleSeedCrlEntry())
+        # TODO more
+    )
+
+class JMaxGroup(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('jmax', Uint8()),
+        namedtype.NamedType('contents', SequenceOfLAGroup())
+        # TODO more
+    )
+
+class SequenceofJMaxGroup(univ.SequenceOf):
+    componentType = JMaxGroup()
+
+class LAGroup(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('la1Id', LaId()),
+        namedtype.NamedType('la2Id', LaId()),
+        namedtype.NamedType('contents', SequenceOfIMaxGroup())
+        # TODO more
+    )
+
+class SequenceOfLAGroup(univ.SequenceOf):
+    componentType = LAGroup()
+
+class IMaxGroup(univ.Sequence):
+    componentType = namedtype.NamedType(
+        namedtype.NamedType('iMax', Uint16()),
+        namedtype.NamedType('contents', SequenceOfIndividualRevocation()),
+        namedtype.OptionalNamedType('singleSeed', SequenceOfLinkageSeed())
+        # TODO more
+    )
+
+class SequenceOfIMaxGroup(univ.SequenceOf):
+    componentType = IMaxGroup()
+
+class IndividualRevocation(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('linkageSeed1', LinkageSeed()),
+        namedtype.NamedType('linkageSeed2', LinkageSeed())
+        # TODO more
+    )
+
+class SequenceOfIndividualRevocation(univ.SequenceOf):
+    componentType = IndividualRevocation()
+
+class GroupCrlEntry(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('iMax', Uint16()),
+        namedtype.NamedType('la1Id', LaId()),
+        namedtype.NamedType('linkageSeed1', LinkageSeed()),
+        namedtype.NamedType('la2Id', LaId()),
+        namedtype.NamedType('linkageSeed2', LinkageSeed())
+        # TODO more
+    )
+
+class SequenceOfGroupCrlEntry(univ.SequenceOf):
+    componentType = GroupCrlEntry()
+
+class LaId(univ.OctetString):
+    subtypeSpec = constraint.ValueSizeConstraint(2, 2)
+
+class LinkageSeed(univ.OctetString): 
+    subtypeSpec = constraint.ValueSizeConstraint(16, 16)
+
+class SequenecofLinkageSeed(univ.SequenceOf):
+    componentType = LinkageSeed()
+
+class ExpansionAlgorithmIdentifier(univ.Enumerated):
+    namedValues = namedval.NamedValues(
+        ('sha256ForI-aesForJ', 0),
+        ('sm3ForI-sm4ForJ', 1)
+    )
+
+class GroupSingleSeedCrlEntry(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('iMax', Uint16()),
+        namedtype.NamedType('laId', LaId()),
+        namedtype.NamedType('linkageSeed', LinkageSeed())
+    )
+
+class SequenceOfGroupSingleSeedCrlEntry(univ.SequenceOf):
+    componentType = GroupSingleSeedCrlEntry()
+
+class SeedEvolutionFunctionIdentifier(univ.Null):
+    pass
+
+class LvGenerationFunctionIdentifier(univ.Null):
+    pass
+
 # --- 7.4 CRL IEEE 1609.2 Security envelope ---
 # --- 8.4 Datastructures ---
