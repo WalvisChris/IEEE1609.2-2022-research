@@ -1,7 +1,10 @@
 from TerminalInterface import *
 from asn1 import *
 
-def encodeMessage(msg: bytes) -> None:
+def encodeMessage(msg: bytes) -> None:    
+    headerInfo = HeaderInfo()
+    tbsData = ToBeSignedData()
+    encData = EncryptedData()
     finalBytes = msg
     return finalBytes
 
