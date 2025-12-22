@@ -191,6 +191,95 @@ class EccP256CurvePoint(univ.Choice):
         )))
     )
 
+class EccP384CurvePoint(univ.Choice):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('x-only', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48))),
+        namedtype.NamedType('fill', univ.Null('')),
+        namedtype.NamedType('compressed-y-0', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48))),
+        namedtype.NamedType('compressed-y-1', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48))),
+        namedtype.NamedType('uncompressedP384', univ.Sequence(componentType=namedtype.NamedTypes(
+            namedtype.NamedType('x', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48))),
+            namedtype.NamedType('y', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48)))
+        )))
+    )
+
+class PduFunctionalType(Uint8):
+    pass
+
+class PduFunctionalType(Uint8):
+    namedValues = namedval.NamedValues(
+        ('tlsHandshake', 1),
+        ('iso21177ExtendedAuth', 2),
+        ('iso21177SessionExtension', 3)
+    )
+
+# class ContributedExtesionBlocks(univ.Sequence):
+
+# class ContributedExtensionBlock(univ.Sequence):
+
+# class 1609Dot2-HEADERINFO-CONTRIBUTED-EXTESNION():
+
+# class Ieee1609Dot2HeaderInfoCOntributedExtensions():
+
+class HeaderInfoContributorId(Uint8):
+    namedValues = namedval.NamedValues(
+        ('ieee1609HeaderInfoContributorId', 1),
+        ('etsiHeaderInfoContributorId', 2)
+    )
+
+class SignerIdentifier(univ.Choice):
+    componentType = namedtype.NamedTypes(
+        ('digest', HashedId8()),
+        ('certificate', SequenceOfCertificate()),
+        ('self', univ.Null())
+    )
+
+class HashedId3(univ.OctetString):
+    subtypeSpec = constraint.ValueSizeConstraint(3, 3)
+
+class SequenceOfHashedId3(univ.SequenceOf):
+    componentType = HashedId3()
+
+class HashedId8(univ.OctetString):
+    subtypeSpec = constraint.ValueSizeConstraint(8, 8)
+
+class HashedId10(univ.OctetString):
+    subtypeSpec = constraint.ValueSizeConstraint(10, 10)
+
+class HashedId32(univ.OctetString):
+    subtypeSpec = constraint.ValueSizeConstraint(32, 32)
+
+class HashedId48(univ.OctetString):
+    subtypeSpec = constraint.ValueSizeConstraint(48, 48)
+
+class Signature(univ.Choice):
+    componentType = namedtype.NamedTypes(
+        ('ecdsaNistP256Signature', EcdsaP256Signature()),
+        ('ecdsaBrainpoolP245r1Signature', EcdsaP256Signature()),
+        ('ecdsaBrainpoolP384r1Signature', EcdsaP384Signature()),
+        ('ecdsaNist384Signature', EcdsaP384Signature()),
+        ('sm2Signature', EcdsaP256Signature()),
+        # TODO more
+    )
+
+class EcdsaP245Signature(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('rSig', EccP256CurvePoint()),
+        namedtype.NamedType('sSig', HashedId32())
+    )
+
+class EcdsaP384Signature(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('rSig', EccP384CurvePoint()),
+        namedtype.NamedType('sSig', HashedId48())
+    )
+
+class EcsigP256Signature(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('rSig', HashedId32()),
+        namedtype.NamedType('sSig', HashedId32())
+    )
+
 # --- 6.4 Certificates ---
 # --- 6.5 General Headerinfo extension ---
 # --- 6.6 Contributed Headerinfo extension ---
