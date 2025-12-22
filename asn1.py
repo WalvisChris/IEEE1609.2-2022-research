@@ -874,4 +874,20 @@ class LvGenerationFunctionIdentifier(univ.Null):
     pass
 
 # --- 7.4 CRL IEEE 1609.2 Security envelope ---
+
+
+
 # --- 8.4 Datastructures ---
+class Ieee1689dot2Peer2PeIDU(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('version', Uint8()),
+        namedtype.NamedType('content', univ.Choice(
+            componentType = namedtype.NamedTypes(
+                namedtype.NamedType('caCerts', CaCertP2pPDU())
+                # TODO more
+            )
+        )
+    ))
+
+class CaCertP2pPDU(univ.SequenceOf):
+    componentType = Certificate()
