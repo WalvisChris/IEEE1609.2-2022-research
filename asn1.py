@@ -81,10 +81,10 @@ class SignedDataPayload(univ.Sequence):
     )
 
 class HashedData(univ.Choice):
-    namedValues = namedval.NamedValues(
-        ('sha256HashedData', HaIdId32()),
-        ('sha364HashedData', HashedId48()),
-        ('sm3HashedData', HashedId32())
+    namedValues = namedtype.NamedValues(
+        namedtype.NamedType('sha256HashedData', HaIdId32()),
+        namedtype.NamedType('sha364HashedData', HashedId48()),
+        namedtype.NamedType('sm3HashedData', HashedId32())
     )
 
 class HeaderInfo(univ.Sequence):
@@ -874,8 +874,71 @@ class LvGenerationFunctionIdentifier(univ.Null):
     pass
 
 # --- 7.4 CRL IEEE 1609.2 Security envelope ---
+class CrlSsp(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('version', Uint8()),
+        namedtype.NamedType('associatedCraca', CracaType()),
+        namedtype.NamedType('crls', PermissibleCrls())
+        # TODO more
+    )
 
+class CracaType(univ.Enumerated):
+    namedValues = namedval.NamedValues(
+        ('isCraca', 0),
+        ('issuerIsCraca', 1)
+    )
 
+class PermissibleCrls(univ.SequenceOf):
+    componentType = CrlSeries()
+
+class CrlPsid(Psid):
+    subtypeSpec = constraint.SingleValueConstraint(256)
+
+class SecuredCrl(Ieee1609Dot2Data):
+    subtypeSpec = constraint.ConstraintsIntersection(
+        Ieee1609Dot2Data.subtypeSpec,
+
+        constraint.ComponentPresentConstraint(
+            'content',
+            constraint.ComponentPresentConstraint(
+                'signedData',
+                constraint.ComponentPresentConstraint(
+                    'tbsData',
+                    constraint.ConstraintsIntersection(
+
+                        constraint.ComponentPresentConstraint(
+                            'payload',
+                            constraint.ComponentPresentConstraint(
+                                'data',
+                                constraint.ComponentPresentConstraint(
+                                    'content',
+                                    constraint.ComponentPresentConstraint(
+                                        'unsecuredData'
+                                    )
+                                )
+                            )
+                        ),
+
+                        constraint.ComponentPresentConstraint(
+                            'headerInfo',
+                            constraint.ConstraintsIntersection(
+                                constraint.ComponentValueConstraint(
+                                    'psid',
+                                    CrlPsid()
+                                ),
+                                constraint.ComponentAbsentConstraint('generationTime'),
+                                constraint.ComponentAbsentConstraint('expiryTime'),
+                                constraint.ComponentAbsentConstraint('generationLocation'),
+                                constraint.ComponentAbsentConstraint('p2pcdLearningRequest'),
+                                constraint.ComponentAbsentConstraint('missingCrlIdentifier'),
+                                constraint.ComponentAbsentConstraint('encryptionKey')
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
 
 # --- 8.4 Datastructures ---
 class Ieee1689dot2Peer2PeIDU(univ.Sequence):

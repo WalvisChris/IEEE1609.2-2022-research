@@ -803,7 +803,7 @@ LvGenerationFunctionIdentifier ::= NULL
 ```
 # 7.4 CRL IEEE 1609.2 Security envelope
 ```asn1
-CrlSsp::= SEQUENCE {
+CrlSsp ::= SEQUENCE {
     version         Uint8(1),
     associatedCraca CracaType,
     crls            PermissibleCrls,
