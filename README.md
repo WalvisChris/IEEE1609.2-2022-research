@@ -1,7 +1,6 @@
 # TODO  
-- fix univ.Choice  
-- replace some HashedId with UNIV OCTECT STRING  
-- replace some Uint with UNIV INTEGER  
+- fix undefined  
+- fix certificate(base)  
 
 # Table of Content
 - 6.2 Basic types
@@ -79,7 +78,7 @@ SignedDataPayload ::= SEQUENCE {
 }
 
 HashedData::= CHOICE {
-    sha256HashedData    HaIdId32,
+    sha256HashedData    HashedId32,
     ...,
     sha384HashedData    HashedId48,
     sm3HashedData       HashedId32

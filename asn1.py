@@ -81,8 +81,8 @@ class SignedDataPayload(univ.Sequence):
     )
 
 class HashedData(univ.Choice):
-    namedValues = namedtype.NamedValues(
-        namedtype.NamedType('sha256HashedData', HaIdId32()),
+    namedValues = namedtype.NamedTypes(
+        namedtype.NamedType('sha256HashedData', HashedId32()),
         namedtype.NamedType('sha364HashedData', HashedId48()),
         namedtype.NamedType('sm3HashedData', HashedId32())
     )
@@ -105,7 +105,7 @@ class HeaderInfo(univ.Sequence):
 class Psid(univ.Integer):
     pass
 
-class Time(Uint64):
+class Time64(Uint64):
     pass
 
 class ThreeDLocation(univ.Sequence):
@@ -265,19 +265,19 @@ class Signature(univ.Choice):
 class EcdsaP256Signature(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('rSig', EccP256CurvePoint()),
-        namedtype.NamedType('sSig', HashedId32())
+        namedtype.NamedType('sSig', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32)))
     )
 
 class EcdsaP384Signature(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('rSig', EccP384CurvePoint()),
-        namedtype.NamedType('sSig', HashedId48())
+        namedtype.NamedType('sSig', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48)))
     )
 
 class EcsigP256Signature(univ.Sequence):
     componentType = namedtype.NamedTypes(
-        namedtype.NamedType('rSig', HashedId32()),
-        namedtype.NamedType('sSig', HashedId32())
+        namedtype.NamedType('rSig', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32))),
+        namedtype.NamedType('sSig', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32)))
     )
 
 class EncryptedData(univ.Sequence):
@@ -385,6 +385,9 @@ class Countersignature(Ieee1609Dot2Data):
 # --- 6.4 Certificates ---
 Certificate = CertificateBase
 
+class SequenceOfCertificate(univ.SequenceOf):
+    componentType = Certificate
+
 class SequenceOfCertificateBase(univ.SequenceOf):
     componentType = Certificate()
 
@@ -419,7 +422,7 @@ class ExplicitCertificate(CertificateBase):
         constraint.ComponentPresentConstraint('signature')
     )
 
-class IssueIdentifier(univ.Choice):
+class IssuerIdentifier(univ.Choice):
     componentType = namedtype.NamedTypes(
         ('sha256AndDigest', HashedId8()),
         ('self', HashAlgorithm()),
