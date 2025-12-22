@@ -1,3 +1,7 @@
+# TODO  
+- fix univ.Choice  
+- replace some HashedId with OCTECT STRING  
+
 # Table of Content
 - 6.2 Basic types
 - 6.3 SPDUs
@@ -282,6 +286,8 @@ RecipientInfo ::= CHOICE {
     rekRecipInfo        PKRecipientInfo
 }
 
+SequenceOfRecipientInfo ::= SEQUENCE OF RecipientInfo
+
 PreSharedKeyRecipientInfo ::= HashedId8
 
 SymmRecipientInfo ::= SEQUENCE {
@@ -493,9 +499,9 @@ CountryAndSubregions ::= SEQUENCE {
     regionAndSubregions SequenceOfRegionAndSubregions
 }
 
-regionAndSubregions ::= SEQUENCE {
- region     Uint8,
- subregions SequenceOfUint16
+RegionAndSubregions ::= SEQUENCE {
+    region     Uint8,
+    subregions SequenceOfUint16
 }
 
 SequenceOfRegionAndSubregions ::= SEQUENCE OF RegionAndSubregions
@@ -555,7 +561,7 @@ BitmapSspRange ::= SEQUENCE {
 
 SequenceOfAppExtensions ::= SEQUENCE (SIZE(1..MAX)) OF AppExtension
 
-appExtension ::= SEQUENCE {
+AppExtension ::= SEQUENCE {
     id      CERT-EXT-TYPE.&id({SetCertExtensions}),
     content CERT-EXT-TYPE.&App({SetCertExtensions}{@.id})
 }
@@ -611,7 +617,7 @@ VerificationKeyIndicator ::= CHOICE {
 
 PublicVerificationKey ::= CHOICE {
     ecdsaNistP256           EccP256CurvePoint,
-    ecdsaBraIoolP256r1      EccP256CurvePoint,
+    ecdsaBrainpoolP256r1    EccP256CurvePoint,
     ...,
     ecdsaBrainpoolP384r1    EccP384CurvePoint,
     ecdsaNistP384           EccP384CurvePoint,
