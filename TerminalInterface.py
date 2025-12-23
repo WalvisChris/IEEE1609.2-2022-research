@@ -1,4 +1,5 @@
 from typing import List
+from pyasn1.type import univ
 import os
 
 COLORS = {
@@ -76,3 +77,48 @@ class TerminalInterface:
     
     def empty(self, lines: int = 1):
         print(lines*"\n")
+    
+    def displayASN1(self, obj, prefix='', is_last=True, depth=0):
+        branch = '└ ' if is_last else '├ '
+        name = obj.__class__.__name__
+
+        # Kies kleur op basis van depth
+        color_list = ["green", "blue", "yellow", "magenta", "cyan", "red"]  # kan uitbreiden
+        color = COLORS[color_list[depth % len(color_list)]]
+
+        # Functie om printen met kleur
+        def cprint(text):
+            print(f"{color}{text}{RESET}")
+
+        # Sequence of Set
+        if isinstance(obj, (univ.Sequence, univ.Set)):
+            cprint(f"{prefix}{branch}{name}:")
+            n = len(obj.componentType)
+            for i, component in enumerate(obj.componentType.namedTypes):
+                field_name = component.name
+                is_last_field = (i == n - 1)
+                new_prefix = prefix + ('    ' if is_last else '│   ')
+                try:
+                    self.displayASN1(obj[field_name], new_prefix, is_last_field, depth + 1)
+                except Exception as e:
+                    cprint(f"{new_prefix}└ <Error accessing {field_name}: {e}>")
+
+        # Choice
+        elif isinstance(obj, univ.Choice):
+            cprint(f"{prefix}{branch}{name}:")
+            new_prefix = prefix + ('    ' if is_last else '│   ')
+            if obj.hasValue():
+                try:
+                    chosen_name = obj.getName()
+                    self.displayASN1(obj[chosen_name], new_prefix, True, depth + 1)
+                except Exception as e:
+                    cprint(f"{new_prefix}└ <Error getting choice: {e}>")
+            else:
+                cprint(f"{new_prefix}└ <Not chosen>")
+
+        # Basistypes
+        else:
+            if hasattr(obj, 'hasValue') and obj.hasValue():
+                cprint(f"{prefix}{branch}{name} = {obj.prettyPrint()}")
+            else:
+                cprint(f"{prefix}{branch}{name} = <empty>")

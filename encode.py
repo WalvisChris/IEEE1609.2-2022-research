@@ -35,7 +35,7 @@ def encodeMessage(payload: str) -> None:
     ieee_data.setComponentByName('protocolVersion', 3)
     ieee_data.setComponentByName('content', ieee_choice)
 
-    finalBytes = ieee_data
+    finalBytes = tbsData
     return finalBytes
 
 if __name__ == "__main__":
@@ -51,4 +51,6 @@ if __name__ == "__main__":
 
     terminal.clear()
 
-    terminal.demoLog(title="Result", title_color="cyan", text=encodeMessage(payload))
+    # terminal.demoLog(title="Result", title_color="cyan", text=encodeMessage(payload))
+
+    terminal.displayASN1(obj=encodeMessage(payload))
