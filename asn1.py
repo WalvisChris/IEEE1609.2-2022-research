@@ -218,13 +218,12 @@ class HeaderInfo(univ.Sequence):
         namedtype.OptionalNamedType('missingCrlIdentifier', MissingCrlIdentifier()),
         namedtype.OptionalNamedType('encryptionKey', EncryptionKey()),
         namedtype.OptionalNamedType('inlineP2pcdRequest', SequenceOfHashedId3()),
-        namedtype.OptionalNamedType('requestedCertificate', Certificate()), # Circular dependency: Certificate used here. Left as is.
+        namedtype.OptionalNamedType('requestedCertificate', univ.Any()), # circular dependency
         namedtype.OptionalNamedType('pduFunctionalType', PduFunctionalType())
-        # TODO meer optionele headerinfo
     )
 
 class HashedData(univ.Choice):
-    namedValues = namedtype.NamedTypes(
+    componentType = namedtype.NamedTypes(
         namedtype.NamedType('sha256HashedData', HashedId32()),
         namedtype.NamedType('sha364HashedData', HashedId48()),
         namedtype.NamedType('sm3HashedData', HashedId32())
@@ -232,9 +231,9 @@ class HashedData(univ.Choice):
 
 class SignedDataPayload(univ.Sequence):
     componentType = namedtype.NamedTypes(
-        namedtype.OptionalNamedType('data', Ieee1609Dot2Data()), # Circular dependency: Ieee1609Dot2Data used here. Left as is.
+        namedtype.OptionalNamedType('data', univ.Any()),  # circular dependency
         namedtype.OptionalNamedType('extDataHash', HashedData()),
-        namedtype.OptionalNamedType('omitted', univ.Null())
+        namedtype.OptionalNamedType('omitted', univ.Null()),
         # TODO meer types
     )
 
@@ -246,9 +245,9 @@ class ToBeSignedData(univ.Sequence):
 
 class SignerIdentifier(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('digest', HashedId8()),
-        ('certificate', SequenceOfCertificate()), # Circular dependency: SequenceOfCertificate used here. Left as is.
-        ('self', univ.Null())
+        namedtype.NamedType('digest', HashedId8()),
+        namedtype.NamedType('certificate', univ.Any()), # circular dependency
+        namedtype.NamedType('self', univ.Null())
     )
 
 class SignedData (univ.Sequence):
@@ -267,8 +266,8 @@ class One28BitCcmCiphertext(univ.Sequence):
 
 class SymmetricCiphertext(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('aes128ccm', One28BitCcmCiphertext()),
-        ('sm4Ccm', One28BitCcmCiphertext())
+        namedtype.NamedType('aes128ccm', One28BitCcmCiphertext()),
+        namedtype.NamedType('sm4Ccm', One28BitCcmCiphertext())
         # TODO more
     )
 
@@ -288,9 +287,9 @@ class EcencP256EncryptedKey(univ.Sequence):
 
 class EncryptedDataEncryptionKey(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('eciesNistP256', EciesP256EncryptedKey()),
-        ('eciesBrainpoolP256r1', EciesP256EncryptedKey()),
-        ('ecencSm2256', EcencP256EncryptedKey())
+        namedtype.NamedType('eciesNistP256', EciesP256EncryptedKey()),
+        namedtype.NamedType('eciesBrainpoolP256r1', EciesP256EncryptedKey()),
+        namedtype.NamedType('ecencSm2256', EcencP256EncryptedKey())
         # TODO more
     )
 
@@ -311,11 +310,11 @@ class PKRecipientInfo(univ.Sequence):
 
 class RecipientInfo(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('pskRecipInfo', PreSharedKeyRecipientInfo()),
-        ('symmRecipInfo', SymmRecipientInfo()),
-        ('certRecipInfo', PKRecipientInfo()),
-        ('signedDataRecipInfo', PKRecipientInfo()),
-        ('rekRecipInfo', PKRecipientInfo())
+        namedtype.NamedType('pskRecipInfo', PreSharedKeyRecipientInfo()),
+        namedtype.NamedType('symmRecipInfo', SymmRecipientInfo()),
+        namedtype.NamedType('certRecipInfo', PKRecipientInfo()),
+        namedtype.NamedType('signedDataRecipInfo', PKRecipientInfo()),
+        namedtype.NamedType('rekRecipInfo', PKRecipientInfo())
     )
 
 class SequenceOfRecipientInfo(univ.SequenceOf):
@@ -324,10 +323,10 @@ class SequenceOfRecipientInfo(univ.SequenceOf):
 class EncryptedData(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('recipients', SequenceOfRecipientInfo()),
-        namedtype.NamedTypes('ciphertext', SymmetricCiphertext())
+        namedtype.NamedType('ciphertext', SymmetricCiphertext())
     )
 
-class Ieee1609Dot2Content (univ.Choice):
+class Ieee1609Dot2Content(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('unsecureData', Opaque()),
         namedtype.NamedType('signedData', SignedData()),
@@ -336,46 +335,14 @@ class Ieee1609Dot2Content (univ.Choice):
         # TODO meer datatypes
     )
 
-class Ieee1609Dot2Data (univ.Sequence):
+class Ieee1609Dot2Data(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('protocolVersion', Uint8()),
         namedtype.NamedType('content', Ieee1609Dot2Content())
     )
 # --- End of SPDUs needed for mutual recursion ---
 
-class Countersignature(Ieee1609Dot2Data):
-    subtypeSpec = constraint.ConstraintsIntersection(
-        Ieee1609Dot2Data.subtypeSpec,
-        constraint.ComponentPresentConstraint(
-            'content',
-            constraint.ComponentPresentConstraint(
-                'signedData',
-                constraint.ComponentPresentConstraint(
-                    'tbsData',
-                    constraint.ConstraintsIntersection(
-                        constraint.ComponentPresentConstraint(
-                            'payload',
-                            constraint.ConstraintsIntersection(
-                                constraint.ComponentAbsentConstraint('data'),
-                                constraint.ComponentPresentConstraint('extDataHash')
-                            )
-                        ),
-                        constraint.ComponentPresentConstraint(
-                            'headerInfo',
-                            constraint.ConstraintsIntersection(
-                                constraint.ComponentPresentConstraint('generationTime'),
-                                constraint.ComponentAbsentConstraint('expiryTime'),
-                                constraint.ComponentAbsentConstraint('generationLocation'),
-                                constraint.ComponentAbsentConstraint('p2pcdLearningRequest'),
-                                constraint.ComponentAbsentConstraint('missingCrlIdentifier'),
-                                constraint.ComponentAbsentConstraint('encryptionKey')
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    )
+# class Countersignature(Ieee1609Dot2Data)
 
 # --- 6.4 Certificates - dependencies placed before use ---
 class CertificateType(univ.Enumerated):
@@ -386,10 +353,10 @@ class CertificateType(univ.Enumerated):
 
 class IssuerIdentifier(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('sha256AndDigest', HashedId8()),
-        ('self', HashAlgorithm()),
-        ('sha384AndDigest', HashedId8()),
-        ('sm3AndDigest', HashedId8())
+        namedtype.NamedType('sha256AndDigest', HashedId8()),
+        namedtype.NamedType('self', HashAlgorithm()),
+        namedtype.NamedType('sha384AndDigest', HashedId8()),
+        namedtype.NamedType('sm3AndDigest', HashedId8())
         # TODO more
     )
 
@@ -414,10 +381,10 @@ class Hostname(char.UTF8String):
 
 class CertificateId(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('linkageData', LinkageData()),
-        ('name', Hostname()),
-        ('binaryId', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(1, 64))),
-        ('none', univ.Null())
+        namedtype.NamedType('linkageData', LinkageData()),
+        namedtype.NamedType('name', Hostname()),
+        namedtype.NamedType('binaryId', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(1, 64))),
+        namedtype.NamedType('none', univ.Null())
     )
 
 class Time32(Uint32):
@@ -425,13 +392,13 @@ class Time32(Uint32):
 
 class Duration(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('microseconds', Uint16()),
-        ('milliseconds', Uint16()),
-        ('seconds', Uint16()),
-        ('minutes', Uint16()),
-        ('hours', Uint16()),
-        ('sixtyHours', Uint16()),
-        ('years', Uint16())
+        namedtype.NamedType('microseconds', Uint16()),
+        namedtype.NamedType('milliseconds', Uint16()),
+        namedtype.NamedType('seconds', Uint16()),
+        namedtype.NamedType('minutes', Uint16()),
+        namedtype.NamedType('hours', Uint16()),
+        namedtype.NamedType('sixtyHours', Uint16()),
+        namedtype.NamedType('years', Uint16())
     )
 
 class ValidityPeriod(univ.Sequence):
@@ -484,9 +451,9 @@ class CountryAndSubregions(univ.Sequence):
 
 class IdentifierdRegion(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('countryOnly', UnCountryId()),
-        ('counrtyAndRegions', CountryAndRegions()),
-        ('countryAndSubregions', CountryAndSubregions())
+        namedtype.NamedType('countryOnly', UnCountryId()),
+        namedtype.NamedType('counrtyAndRegions', CountryAndRegions()),
+        namedtype.NamedType('countryAndSubregions', CountryAndSubregions())
         # TODO more
     )
 
@@ -495,10 +462,10 @@ class SequenceOfIdentifiedRegion(univ.SequenceOf):
 
 class GeographicRegion(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('circularRegion', CircularRegion()),
-        ('rectangularRegion', SequenceOfRectangularRegion()),
-        ('polygonalRegion', PolygonalRegion()),
-        ('identifiedRegion', SequenceOfIdentifiedRegion())
+        namedtype.NamedType('circularRegion', CircularRegion()),
+        namedtype.NamedType('rectangularRegion', SequenceOfRectangularRegion()),
+        namedtype.NamedType('polygonalRegion', PolygonalRegion()),
+        namedtype.NamedType('identifiedRegion', SequenceOfIdentifiedRegion())
         # TODO more
     )
 
@@ -510,8 +477,8 @@ class BitmapSsp(univ.OctetString):
 
 class ServiceSpecificPermissions(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('opaque', univ.OctetString()),
-        ('bitmapSsp', BitmapSsp())
+        namedtype.NamedType('opaque', univ.OctetString()),
+        namedtype.NamedType('bitmapSsp', BitmapSsp())
         # TODO more
     )
 
@@ -532,9 +499,9 @@ class BitmapSspRange(univ.Sequence):
 
 class SspRange(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('opaque', SequenceOfOctetString()),
-        ('all', univ.Null()),
-        ('bitmapSspRange', BitmapSspRange())
+        namedtype.NamedType('opaque', SequenceOfOctetString()),
+        namedtype.NamedType('all', univ.Null()),
+        namedtype.NamedType('bitmapSspRange', BitmapSspRange())
         # TODO more
     )
 
@@ -549,8 +516,8 @@ class SequenceOfPsidSspRange(univ.SequenceOf):
 
 class SubjectPermissions(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('explicit', SequenceOfPsidSspRange()),
-        ('all', univ.Null())
+        namedtype.NamedType('explicit', SequenceOfPsidSspRange()),
+        namedtype.NamedType('all', univ.Null())
         # TODO more
     )
 
@@ -559,14 +526,14 @@ class EndEntityType(univ.BitString):
         ('app', 0),
         ('enroll', 1)
     )
-    subtypeSpec = constraint.ValueSizeConstraint(8, 8)
+    subtypeSpec = constraint.ValueSizeConstraint(0, 1)
 
 class PsidGroupPermissions(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('subjectPermissions', SubjectPermissions()),
         namedtype.DefaultedNamedType('minChainLength', univ.Integer(1)),
         namedtype.DefaultedNamedType('chainLengthRange', univ.Integer(0)),
-        namedtype.DefaultedNamedType('eeType', EndEntityType('app'))
+        namedtype.DefaultedNamedType('eeType', EndEntityType(0))
     )
 
 class SequenceOfPsidGroupPermissions(univ.SequenceOf):
@@ -662,28 +629,17 @@ class SequenceOfCertificate(univ.SequenceOf):
 class SequenceOfCertificateBase(univ.SequenceOf):
     componentType = Certificate()
 
-class ImplicitCertificate(CertificateBase):
-    subtypeSpec = constraint.ConstraintsIntersection(
-        CertificateBase.subtypeSpec,
-        constraint.ComponentValueConstraint('type', CertificateType('implicit')),
-        constraint.ComponentPresentConstraint('toBeSigned', constraint.ComponentPresentConstraint('verifyKeyIndicator', constraint.ComponentPresentConstraint('reconstructionValue'))),
-        constraint.ComponentAbsentConstraint('signature')
-    )
+# class ImplicitCertificate(CertificateBase)
 
-class ExplicitCertificate(CertificateBase):
-    subtypeSpec = constraint.ConstraintsIntersection(
-        CertificateBase.subtypeSpec,
-        constraint.ComponentValueConstraint('type', CertificateType('explicit')),
-        constraint.ComponentPresentConstraint('toBeSigned', constraint.ComponentPresentConstraint('verifyKeyIndicator', constraint.ComponentPresentConstraint('verificationKey'))),
-        constraint.ComponentPresentConstraint('signature')
-    )
+# class ExplicitCertificate(CertificateBase)
+
 # --- End of Certificates ---
 
 # --- 6.5 General Headerinfo extension ---
 class Extension(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('id', univ.ObjectIdentifier()),
-        namedtype.NamedTypes('content', univ.Any())
+        namedtype.NamedType('content', univ.Any())
     )
 
 class ExtId(Uint8):
@@ -867,7 +823,7 @@ class LvGenerationFunctionIdentifier(univ.Null):
 # --- 7.4 CRL IEEE 1609.2 Security envelope ---
 class CracaType(univ.Choice):
     componentType = namedtype.NamedTypes(
-        ('certificate', Certificate())
+        namedtype.NamedType('certificate', Certificate())
         # TODO more choices
     )
 
