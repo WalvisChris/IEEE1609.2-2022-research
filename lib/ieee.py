@@ -1,10 +1,9 @@
+from lib.TerminalInterface import TerminalInterface
 import hashlib
-from TerminalInterface import *
-from asn1 import *
 import time
+from lib.asn1 import *
 
-def encodeMessage(payload: str) -> None:    
-    
+def encodeMessageTest(payload: str, terminal: TerminalInterface) -> bytes:
     payload_bytes = payload.encode('utf-8')
 
     GENERATION_TIME = int(time.time() * 1_000_000)
@@ -38,19 +37,14 @@ def encodeMessage(payload: str) -> None:
     finalBytes = tbsData
     return finalBytes
 
-if __name__ == "__main__":
-    terminal = TerminalInterface()
-    terminal.clear()
+def encodeUnsecured(payload: str, terminal: TerminalInterface) -> bytes:    
+    return b""
 
-    payload = terminal.input(prompt="payload: ")
+def encodeSigned(payload: str, terminal: TerminalInterface) -> bytes:
+    return b""
 
-    terminal.clear()
+def encodeEncrypted(payload: str, terminal: TerminalInterface) -> bytes:
+    return b""
 
-    terminal.textbox(title=(f"payload: {payload}"), title_color="cyan", items=["unsecure", "signed", "encrypted", "enveloped"], numbered=True)
-    contentType = terminal.input(prompt="> ")
-
-    terminal.clear()
-
-    # terminal.demoLog(title="Result", title_color="cyan", text=encodeMessage(payload))
-
-    terminal.displayASN1(obj=encodeMessage(payload))
+def encodeEnveloped(payload: str, terminal: TerminalInterface) -> bytes:
+    return b""
