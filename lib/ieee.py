@@ -38,7 +38,17 @@ def encodeMessageTest(payload: str, terminal: TerminalInterface) -> bytes:
     return finalBytes
 
 def encodeUnsecured(payload: str, terminal: TerminalInterface) -> bytes:    
-    return b""
+    payload_bytes = payload.encode('utf-8')
+    
+    ieee_choice = Ieee1609Dot2Content()
+    ieee_choice.setComponentByName('unsecureData', Opaque(payload_bytes))
+
+    ieee_data = Ieee1609Dot2Data()
+    ieee_data.setComponentByName('protocolVersion', 3)
+    ieee_data.setComponentByName('content', ieee_choice)
+
+    finalBytes = ieee_data
+    return finalBytes
 
 def encodeSigned(payload: str, terminal: TerminalInterface) -> bytes:
     return b""
