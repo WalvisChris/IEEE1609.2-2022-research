@@ -120,7 +120,7 @@ class TerminalInterface:
                 is_last_field = (i == n - 1)
                 new_prefix = prefix + ('    ' if is_last else '│   ')
                 try:
-                    self.displayASN1(obj[fname], new_prefix, is_last_field, depth + 1, field_name=fname)
+                    self.displayASN1(obj.getComponentByName(fname), new_prefix, is_last_field, depth + 1, field_name=fname)
                 except Exception as e:
                     print(f"{new_prefix}└ <Error accessing {fname}: {e}>")
 
@@ -158,3 +158,16 @@ class TerminalInterface:
         text_color_code = self.COLORS.get(text_color.lower(), self.COLORS["white"])
         border_color_code = self.COLORS.get(border_color.lower(), self.COLORS["white"])
         print(f"{border_color_code}[{text_color_code}{text.upper()}{border_color_code}]{self.RESET}")
+    
+    def vsLog(self, name, obj):
+        asn1_type = type(obj).__name__  # hernoemd, geen conflict meer
+        try:
+            val_str = str(obj)
+        except Exception:
+            val_str = "<unprintable>"
+        
+        NAME_COLOR = self.COLORS["blue"]
+        DATATYPE_COLOR = self.COLORS["bright_green"]
+        VALUE_COLOR = self.COLORS["vs_yellow"]
+
+        print(f"{NAME_COLOR}{name} {DATATYPE_COLOR}{asn1_type} {self.RESET}= {VALUE_COLOR}{val_str}{self.RESET}\n")

@@ -96,16 +96,27 @@ class EncryptionKey(univ.Choice):
         # TODO more algorithms
     )
 
+# extra class for fix
+class UncompressedP256(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('x', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32))),
+        namedtype.NamedType('y', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32)))
+    )
+
 class EccP256CurvePoint(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('x-only', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32))),
         namedtype.NamedType('fill', univ.Null('')),
         namedtype.NamedType('compressed-y-0', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32))),
         namedtype.NamedType('compressed-y-1', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32))),
-        namedtype.NamedType('uncompressedP256', univ.Sequence(componentType=namedtype.NamedTypes(
-            namedtype.NamedType('x', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32))),
-            namedtype.NamedType('y', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(32, 32)))
-        )))
+        namedtype.NamedType('uncompressedP256', UncompressedP256())
+    )
+
+# extra class for fix
+class UncompressedP384(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('x', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48))),
+        namedtype.NamedType('y', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48)))
     )
 
 class EccP384CurvePoint(univ.Choice):
@@ -114,10 +125,7 @@ class EccP384CurvePoint(univ.Choice):
         namedtype.NamedType('fill', univ.Null('')),
         namedtype.NamedType('compressed-y-0', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48))),
         namedtype.NamedType('compressed-y-1', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48))),
-        namedtype.NamedType('uncompressedP384', univ.Sequence(componentType=namedtype.NamedTypes(
-            namedtype.NamedType('x', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48))),
-            namedtype.NamedType('y', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(48, 48)))
-        )))
+        namedtype.NamedType('uncompressedP384', UncompressedP384())
     )
 
 class BasePublicEncryptionKey(univ.Choice):

@@ -21,14 +21,14 @@ if __name__ == "__main__":
 
     match contentType:
         case 1:
-            terminal.displayASN1(ieee.encodeUnsecured(payload, terminal))
+            terminal.displayASN1(ieee.encodeUnsecured(payload))
         case 2:
             terminal.displayASN1(ieee.encodeSigned(payload, terminal))
         case 3:
-            terminal.displayASN1(ieee.encodeEncrypted(payload, terminal))
+            terminal.displayASN1(ieee.encodeEncrypted(payload))
         case 4:
-            terminal.displayASN1(ieee.encodeEnveloped(payload, terminal))
+            terminal.displayASN1(ieee.encodeEnveloped(payload))
         case 5:
-            terminal.displayASN1(ieee.encodeMessageTest(payload, terminal))
+            terminal.displayASN1(ieee.encodeMessageTest(payload))
         case _:
             terminal.text("Invalid content type.", color="red")
