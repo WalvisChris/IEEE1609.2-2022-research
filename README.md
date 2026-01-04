@@ -1,6 +1,12 @@
 # TODO  
-- fix undefined  
-- fix certificate(base)  
+- real signing:
+    - real certificates.  
+    - ecdsa.  
+- real encryption:
+    - real PKI.  
+    - real AES CCM key.  
+    - real nonce.  
+- visualisation.  
 
 # Table of Content
 - 6.2 Basic types
@@ -171,7 +177,7 @@ BasePublicEncryptionKey ::= CHOICE {
     ecencSm2        EccP256CurvePoint
 }
 
-EccP256CurvePoint::= CHOICE {
+EccP256CurvePoint ::= CHOICE {
     x-only          OCTET STRING (SIZE (32)),
     fill            NULL,
     compressed-y-0  OCTET STRING (SIZE (32)),
@@ -182,7 +188,7 @@ EccP256CurvePoint::= CHOICE {
     }
 }
 
-EccP384CurvePoint::= CHOICE {
+EccP384CurvePoint ::= CHOICE {
     x-only          OCTET STRING (SIZE (48)),
     fill            NULL,
     compressed-y-0  OCTET STRING (SIZE (48)),
@@ -851,4 +857,16 @@ Ieee1609dot2Peer2PeIDU ::= SEQUENCE {
 }
 
 CaCertP2pPDU ::= SEQUENCE OF Certificate
+```
+# Additional structures  
+```asn1
+uncompressedP256 ::= SEQUENCE {
+    x OCTET STRING (SIZE (32)),
+    y OCTET STRING (SIZE (32))
+}
+
+uncompressedP384 ::= SEQUENCE {
+    x OCTET STRING (SIZE (48)),
+    y OCTET STRING (SIZE (48))
+}
 ```
