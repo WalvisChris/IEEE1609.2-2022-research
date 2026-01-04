@@ -258,7 +258,7 @@ class SignerIdentifier(univ.Choice):
         namedtype.NamedType('self', univ.Null())
     )
 
-class SignedData (univ.Sequence):
+class SignedData(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('hashId', HashAlgorithm()),
         namedtype.NamedType('tbsData', ToBeSignedData()),

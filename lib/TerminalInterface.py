@@ -1,5 +1,4 @@
 from typing import List
-from pyasn1.type import univ
 import os
 
 class TerminalInterface:
@@ -78,7 +77,7 @@ class TerminalInterface:
         print(f"[{title_color_code}{title}{self.RESET}]:\n{text_color_code}{text}{self.RESET}")
 
     def empty(self, lines: int = 1):
-        print(lines*"\n")
+        print("\n" * lines, end="")
     
     KEY_COLORS_BY_DEPTH = [
         "blue"
@@ -94,80 +93,70 @@ class TerminalInterface:
         "white"
     ]
 
-    def displayASN1(self, obj, prefix='', is_last=True, depth=0, field_name=None):
-        """
-        Robust ASN.1 tree printer with colors per depth and datatype display.
-        """
-        branch = '└ ' if is_last else '├ '
-
-        # Kies kleuren per depth
-        key_color = self.COLORS[self.KEY_COLORS_BY_DEPTH[depth % len(self.KEY_COLORS_BY_DEPTH)]]
-        value_color = self.COLORS[self.VALUE_COLORS_BY_DEPTH[depth % len(self.VALUE_COLORS_BY_DEPTH)]]
-        datatype_color = self.COLORS[self.DATATYPE_COLORS_BY_DEPTH[depth % len(self.DATATYPE_COLORS_BY_DEPTH)]]
-        reset = self.RESET
-
-        display_name = field_name if field_name else obj.__class__.__name__
-        datatype_name = obj.__class__.__name__
-
-        base = f"{prefix}{branch}"
-
-        # ===== Sequence / Set =====
-        if isinstance(obj, (univ.Sequence, univ.Set)):
-            print(f"{base}{key_color}{display_name}{reset} ({datatype_color}{datatype_name}{reset}):")
-            n = len(obj.componentType)
-            for i, component in enumerate(obj.componentType.namedTypes):
-                fname = component.name
-                is_last_field = (i == n - 1)
-                new_prefix = prefix + ('    ' if is_last else '│   ')
-                try:
-                    self.displayASN1(obj.getComponentByName(fname), new_prefix, is_last_field, depth + 1, field_name=fname)
-                except Exception as e:
-                    print(f"{new_prefix}└ <Error accessing {fname}: {e}>")
-
-        # ===== Choice =====
-        elif isinstance(obj, univ.Choice):
-            print(f"{base}{key_color}{display_name}{reset} ({datatype_color}{datatype_name}{reset}):")
-            new_prefix = prefix + ('    ' if is_last else '│   ')
-            if obj.hasValue():
-                try:
-                    chosen_name = obj.getName()
-                    self.displayASN1(obj[chosen_name], new_prefix, True, depth + 1, field_name=chosen_name)
-                except Exception as e:
-                    print(f"{new_prefix}└ <Error getting choice: {e}>")
-            else:
-                print(f"{new_prefix}└ {value_color}<Not chosen>{reset}")
-
-        # ===== Basistypes =====
-        else:
-            if hasattr(obj, 'hasValue') and obj.hasValue():
-                print(
-                    f"{base}"
-                    f"{key_color}{display_name}{reset} "
-                    f"({datatype_color}{datatype_name}{reset}) = "
-                    f"{value_color}{obj.prettyPrint()}{reset}"
-                )
-            else:
-                print(
-                    f"{base}"
-                    f"{key_color}{display_name}{reset} "
-                    f"({datatype_color}{datatype_name}{reset}) = "
-                    f"{value_color}<empty>{reset}"
-                )
-
     def UpperHeader(self, text: str, text_color="white", border_color="white"):
         text_color_code = self.COLORS.get(text_color.lower(), self.COLORS["white"])
         border_color_code = self.COLORS.get(border_color.lower(), self.COLORS["white"])
         print(f"{border_color_code}[{text_color_code}{text.upper()}{border_color_code}]{self.RESET}")
     
-    def vsLog(self, name, obj):
-        asn1_type = type(obj).__name__  # hernoemd, geen conflict meer
-        try:
-            val_str = str(obj)
-        except Exception:
-            val_str = "<unprintable>"
-        
-        NAME_COLOR = self.COLORS["blue"]
-        DATATYPE_COLOR = self.COLORS["bright_green"]
-        VALUE_COLOR = self.COLORS["vs_yellow"]
+    def _is_last(self, lines, index, level):
+        for next_line in lines[index + 1:]:
+            next_level = len(next_line) - len(next_line.lstrip('>'))
+            if next_level < level:
+                return True
+            if next_level == level:
+                return False
+        return True
 
-        print(f"{NAME_COLOR}{name} {DATATYPE_COLOR}{asn1_type} {self.RESET}= {VALUE_COLOR}{val_str}{self.RESET}\n")
+    def printASN1(self, obj):
+        KEY_COLOR = self.COLORS["blue"]
+        OBJECT_COLOR = self.COLORS["vs_purple"]
+        VAL_COLOR = self.COLORS["bright_cyan"]
+        VALUE_COLOR = self.COLORS["bright_green"]
+
+        text = obj.prettyPrint()
+
+        lines = text.splitlines()
+        new_lines = []
+        for line in lines:
+            leading_spaces = len(line) - len(line.lstrip(' '))
+            new_line = '>' * leading_spaces + line.lstrip(' ')
+            new_lines.append(new_line)
+        text = "\n".join(new_lines)
+
+        while "\n\n" in text:
+            text = text.replace("\n\n", "\n")
+
+        lines = text.splitlines()
+        result = ""
+
+        for i, line in enumerate(lines):
+            level = len(line) - len(line.lstrip('>'))
+            content = line[level:]
+
+            if '=' in content:
+                key, val = content.split('=', 1)
+
+                if ':' in val:
+                    content = f"{KEY_COLOR}{key}{self.RESET} = {OBJECT_COLOR}{val}{self.RESET}"
+                else:
+                    content = f"{VAL_COLOR}{key}{self.RESET} = {VALUE_COLOR}{val}{self.RESET}"
+
+            if i == 0:
+                result += content + "\n"
+                continue
+
+            last = self._is_last(lines, i, level)
+
+            prefix = ""
+            for l in range(1, level):
+                if not self._is_last(lines, i, l):
+                    prefix += " │ "
+                else:
+                    prefix += "   "
+
+            branch = " └ " if last else " ├ "
+            result += prefix + branch + content + "\n"
+
+        print(result)
+
+

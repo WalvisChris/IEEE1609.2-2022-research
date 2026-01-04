@@ -2,7 +2,7 @@ from lib.TerminalInterface import *
 from lib.asn1 import *
 import lib.ieee as ieee
 
-CONTENT_TYPES = ["unsecure", "signed", "encrypted", "enveloped", "DEMO"]
+CONTENT_TYPES = ["unsecure", "signed", "encrypted", "enveloped"]
 
 if __name__ == "__main__":
     terminal = TerminalInterface()
@@ -17,18 +17,17 @@ if __name__ == "__main__":
 
     terminal.clear()
 
-    terminal.UpperHeader(text=CONTENT_TYPES[contentType - 1])
+    _text = f"{CONTENT_TYPES[contentType - 1]}] => [{payload}" 
+    terminal.UpperHeader(text=_text)
 
     match contentType:
         case 1:
-            terminal.displayASN1(ieee.encodeUnsecured(payload))
+            terminal.printASN1(ieee.encodeUnsecured(payload))
         case 2:
-            terminal.displayASN1(ieee.encodeSigned(payload, terminal))
+            terminal.printASN1(ieee.encodeSigned(payload))
         case 3:
-            terminal.displayASN1(ieee.encodeEncrypted(payload))
+            terminal.printASN1(ieee.encodeEncrypted(payload))
         case 4:
-            terminal.displayASN1(ieee.encodeEnveloped(payload))
-        case 5:
-            terminal.displayASN1(ieee.encodeMessageTest(payload))
+            terminal.printASN1(ieee.encodeEnveloped(payload))
         case _:
             terminal.text("Invalid content type.", color="red")

@@ -3,40 +3,6 @@ import hashlib
 import time
 from lib.asn1 import *
 
-def encodeMessageTest(payload: str) -> bytes:
-    payload_bytes = payload.encode('utf-8')
-
-    GENERATION_TIME = int(time.time() * 1_000_000)
-    EXPIRY_TIME = GENERATION_TIME + 10_000_000
-
-    headerInfo = HeaderInfo()
-    headerInfo.setComponentByName('psid', 0x20)
-    headerInfo.setComponentByName('generationTime', GENERATION_TIME)
-    headerInfo.setComponentByName('expiryTime', EXPIRY_TIME)
-
-    RAW_HASH_BYTES = hashlib.sha256(payload_bytes).digest()
-    hash = HashedId32(RAW_HASH_BYTES)
-
-    hashedData = HashedData()
-    hashedData.setComponentByName('sha256HashedData', hash)
-
-    signedPayload = SignedDataPayload()
-    signedPayload.setComponentByName('extDataHash', hashedData)
-
-    tbsData = ToBeSignedData()
-    tbsData.setComponentByName('payload', signedPayload)
-    tbsData.setComponentByName('headerInfo', headerInfo)
-    
-    ieee_choice = Ieee1609Dot2Content()
-    ieee_choice.setComponentByName('unsecureData', payload)
-
-    ieee_data = Ieee1609Dot2Data()
-    ieee_data.setComponentByName('protocolVersion', 3)
-    ieee_data.setComponentByName('content', ieee_choice)
-
-    finalBytes = tbsData
-    return finalBytes
-
 def encodeUnsecured(payload: str) -> bytes:    
     payload_bytes = payload.encode('utf-8')
     
@@ -50,89 +16,151 @@ def encodeUnsecured(payload: str) -> bytes:
     finalBytes = ieee_data
     return finalBytes
 
-def encodeSigned(payload: str, terminal: TerminalInterface) -> bytes:
+def encodeSigned(payload: str) -> bytes:
     payload_bytes = payload.encode('utf-8')
 
+    # === HEADER INFO ===
     GENERATION_TIME = int(time.time() * 1_000_000)
     EXPIRY_TIME = GENERATION_TIME + 10_000_000
 
     headerInfo = HeaderInfo()
-    headerInfo.setComponentByName('psid', 0x20)
-    headerInfo.setComponentByName('generationTime', GENERATION_TIME)
-    headerInfo.setComponentByName('expiryTime', EXPIRY_TIME)
+    headerInfo['psid'] = 0x20
+    headerInfo['generationTime'] = GENERATION_TIME
+    headerInfo['expiryTime'] = EXPIRY_TIME
 
-    RAW_HASH_BYTES = hashlib.sha256(payload_bytes).digest()
-    hash = HashedId32(RAW_HASH_BYTES)
-
-    hashedData = HashedData()
-    hashedData.setComponentByName('sha256HashedData', hash)
-
-    # === SignedData ===
+    # === HashAlgorithm ===
     hashAlg = HashAlgorithm(0)
-    
-    # DEBUG
-    terminal.empty()
-    terminal.displayASN1(hashAlg)
 
-    signedPayload = SignedDataPayload()
-    signedPayload.setComponentByName('extDataHash', hashedData)
+    # === HashedData ===
+    RAW_HASH_BYTES = hashlib.sha256(payload_bytes).digest()
 
-    tbsData = ToBeSignedData()
-    tbsData.setComponentByName('payload', signedPayload)
-    tbsData.setComponentByName('headerInfo', headerInfo)
+    hashed_data = HashedData()
+    hashed_data['sha256HashedData'] = RAW_HASH_BYTES
 
-    digest_value = b'\x01\x02\x03\x04\x05\x06\x07\x08'
+    # === SignedDataPayload ===
+    signed_payload = SignedDataPayload()
+    signed_payload['extDataHash'] = hashed_data
 
+    # === ToBeSignedData ===
+    tbs_data = ToBeSignedData()
+    tbs_data['payload'] = signed_payload
+    tbs_data['headerInfo'] = headerInfo
+
+    # === SignerIdentifier ===
     signer = SignerIdentifier()
-    signer.setComponentByName('digest', digest_value)
+    signer['certificate'] = 0x01
 
-    # placeholder values
-    r_bytes = b'\x01' * 32
-    s_bytes = b'\x01' * 32
-    x_bytes = b'\x03' * 32
-    y_bytes = b'\x04' * 32
-
-    uncompressed = UncompressedP256() 
-    uncompressed.setComponentByName('x', x_bytes)
-    uncompressed.setComponentByName('y', y_bytes)
+    # === Signature Points ===
+    uncompressed = UncompressedP256()
+    uncompressed['x'] = b'\x02' * 32 # ?
+    uncompressed['y'] = b'\x03' * 32 # ?
 
     r_point = EccP256CurvePoint()
-    r_point.setComponentByName('uncompressedP256', uncompressed)
+    r_point['uncompressedP256'] = uncompressed
+    s_bytes = b'\x01' * 32 # ?
 
-    EcdsaSignature = EcdsaP256Signature()
-    EcdsaSignature.setComponentByName('rSig', r_point)
-    EcdsaSignature.setComponentByName('sSig', s_bytes)
+    # === EcdsaP256Signature ===
+    ecdsa_sig = EcdsaP256Signature()
+    ecdsa_sig['rSig'] = r_point
+    ecdsa_sig['sSig'] = s_bytes # ?
 
+    # === SIGNATURE ===
     signature = Signature()
-    signature.setComponentByName('ecdsaNistP256Signature', EcdsaSignature)
+    signature['ecdsaNistP256Signature'] = ecdsa_sig
 
+    # === SIGNED DATA ===
     signed_data = SignedData()
-    signed_data.setComponentByName('hashId', hashAlg)
-    signed_data.setComponentByName('tbsData', tbsData)
-    signed_data.setComponentByName('signer', signer)
-    signed_data.setComponentByName('signature', signature)
-    
-    # DEBUG
-    terminal.empty()
-    terminal.displayASN1(signed_data)
-    
+    signed_data['hashId'] = hashAlg
+    signed_data['tbsData'] = tbs_data
+    signed_data['signer'] = signer
+    signed_data['signature'] = signature
+
+    # === Ieee1609Dot2Content ===
+    ieee_content = Ieee1609Dot2Content()
+    ieee_content['signedData'] = signed_data
+
     # === Ieee1609Dot2Data ===
-    ieee_choice = Ieee1609Dot2Content()
-    ieee_choice.setComponentByName('signedData', signed_data)
-
     ieee_data = Ieee1609Dot2Data()
-    ieee_data.setComponentByName('protocolVersion', 3)
-    ieee_data.setComponentByName('content', ieee_choice)
-
-    # DEBUG
-    terminal.empty()
-    terminal.displayASN1(ieee_data)
+    ieee_data['protocolVersion'] = 3
+    ieee_data['content'] = ieee_content
 
     finalBytes = ieee_data
     return finalBytes
 
 def encodeEncrypted(payload: str) -> bytes:
-    return b""
+    payload_bytes = payload.encode('utf-8')
+
+    # === PreSharedKeyRecipientInfo ===
+    pskRecipInfo = PreSharedKeyRecipientInfo(b'\x01\x02\x03\x04\x05\x06\x07\x08') # ?
+
+    # === RecipientId ===
+    recipId = HashedId8(b'\x01\x02\x03\x04\x05\x06\x07\x08') # ?
+
+    # === One28BitCcmCiphertext ===
+    aes128ccm = One28BitCcmCiphertext()
+    aes128ccm['nonce'] = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C' # ?
+    aes128ccm['ccmCiphertext'] = payload_bytes # ?
+
+    # === SymmetricCiphertext ===
+    symmCiphertext = SymmetricCiphertext()
+    symmCiphertext['aes128ccm'] = aes128ccm
+
+    # === SymmRecipientInfo ===
+    symmRecipInfo = SymmRecipientInfo()
+    symmRecipInfo['recipientId'] = recipId # ?
+    symmRecipInfo['encKey'] = symmCiphertext
+
+    # === EccP256CurvePoint ===
+    uncompressed = UncompressedP256()
+    uncompressed['x'] = b'\x02' * 32 # ?
+    uncompressed['y'] = b'\x03' * 32 # ?
+
+    curvePoint = EccP256CurvePoint()
+    curvePoint['uncompressedP256'] = uncompressed
+
+    # === EciesP256EncryptedKey ===
+    eciesKey = EciesP256EncryptedKey()
+    eciesKey['v'] = curvePoint
+    eciesKey['c'] = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10' # ?
+    eciesKey['t'] = b'\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x20' # ?
+
+    # === EncryptedDataEncryptionKey ===
+    encKey = EncryptedDataEncryptionKey()
+    encKey['eciesNistP256'] = eciesKey
+
+    # === PKRecipientInfo ===
+    certRecipInfo = PKRecipientInfo()
+    certRecipInfo['recipientId'] = recipId # ?
+    certRecipInfo['encKey'] = encKey
+
+    # === RecipientInfo ===
+    recipient1 = RecipientInfo()
+    recipient1['pskRecipInfo'] = pskRecipInfo
+    recipient1['symmRecipInfo'] = symmRecipInfo
+    recipient1['certRecipInfo'] = certRecipInfo
+    recipient1['signedDataRecipInfo'] = certRecipInfo # ?
+    recipient1['rekRecipInfo'] = certRecipInfo # ?
+
+    # === SequenceOfRecipientInfo ===
+    recipients = SequenceOfRecipientInfo()
+    recipients.append(recipient1)
+
+    # === EncryptedData ===
+    enc_data = EncryptedData()
+    enc_data['recipients'] = recipients
+    enc_data['ciphertext'] = symmCiphertext
+
+    # === Ieee1609Dot2Content ===
+    ieee_content = Ieee1609Dot2Content()
+    ieee_content['encryptedData'] = enc_data
+
+    # === Ieee1609Dot2Data ===
+    ieee_data = Ieee1609Dot2Data()
+    ieee_data['protocolVersion'] = 3
+    ieee_data['content'] = ieee_content
+    
+    finalBytes = ieee_data
+    return finalBytes
 
 def encodeEnveloped(payload: str) -> bytes:
-    return b""
+    return univ.OctetString("<TODO>")
