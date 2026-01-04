@@ -12,69 +12,65 @@ terminal.clear()
 
 payload_bytes = payload.encode('utf-8')
 
-# === PreSharedKeyRecipientInfo ===
-pskRecipInfo = PreSharedKeyRecipientInfo(b'\x01\x02\x03\x04\x05\x06\x07\x08') # ?
+# === HEADER INFO ===
+GENERATION_TIME = int(time.time() * 1_000_000)
+EXPIRY_TIME = GENERATION_TIME + 10_000_000
 
-# === RecipientId ===
-recipId = HashedId8(b'\x01\x02\x03\x04\x05\x06\x07\x08') # ?
+headerInfo = HeaderInfo()
+headerInfo['psid'] = 0x20
+headerInfo['generationTime'] = GENERATION_TIME
+headerInfo['expiryTime'] = EXPIRY_TIME
 
-# === One28BitCcmCiphertext ===
-aes128ccm = One28BitCcmCiphertext()
-aes128ccm['nonce'] = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C' # ?
-aes128ccm['ccmCiphertext'] = payload_bytes # ?
+# === HashAlgorithm ===
+hashAlg = HashAlgorithm(0)
 
-# === SymmetricCiphertext ===
-symmCiphertext = SymmetricCiphertext()
-symmCiphertext['aes128ccm'] = aes128ccm
+# === HashedData ===
+RAW_HASH_BYTES = hashlib.sha256(payload_bytes).digest()
 
-# === SymmRecipientInfo ===
-symmRecipInfo = SymmRecipientInfo()
-symmRecipInfo['recipientId'] = recipId # ?
-symmRecipInfo['encKey'] = symmCiphertext
+hashed_data = HashedData()
+hashed_data['sha256HashedData'] = RAW_HASH_BYTES
 
-# === EccP256CurvePoint ===
+# === SignedDataPayload ===
+signed_payload = SignedDataPayload()
+signed_payload['extDataHash'] = hashed_data
+
+# === ToBeSignedData ===
+tbs_data = ToBeSignedData()
+tbs_data['payload'] = signed_payload
+tbs_data['headerInfo'] = headerInfo
+
+# === SignerIdentifier ===
+signer = SignerIdentifier()
+signer['certificate'] = 0x01
+
+# === Signature Points ===
 uncompressed = UncompressedP256()
 uncompressed['x'] = b'\x02' * 32 # ?
 uncompressed['y'] = b'\x03' * 32 # ?
 
-curvePoint = EccP256CurvePoint()
-curvePoint['uncompressedP256'] = uncompressed
+r_point = EccP256CurvePoint()
+r_point['uncompressedP256'] = uncompressed
+s_bytes = b'\x01' * 32 # ?
 
-# === EciesP256EncryptedKey ===
-eciesKey = EciesP256EncryptedKey()
-eciesKey['v'] = curvePoint
-eciesKey['c'] = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10' # ?
-eciesKey['t'] = b'\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x20' # ?
+# === EcdsaP256Signature ===
+ecdsa_sig = EcdsaP256Signature()
+ecdsa_sig['rSig'] = r_point
+ecdsa_sig['sSig'] = s_bytes # ?
 
-# === EncryptedDataEncryptionKey ===
-encKey = EncryptedDataEncryptionKey()
-encKey['eciesNistP256'] = eciesKey
+# === SIGNATURE ===
+signature = Signature()
+signature['ecdsaNistP256Signature'] = ecdsa_sig
 
-# === PKRecipientInfo ===
-certRecipInfo = PKRecipientInfo()
-certRecipInfo['recipientId'] = recipId # ?
-certRecipInfo['encKey'] = encKey
-
-# === RecipientInfo ===
-recipient1 = RecipientInfo()
-recipient1['pskRecipInfo'] = pskRecipInfo
-recipient1['symmRecipInfo'] = symmRecipInfo
-recipient1['certRecipInfo'] = certRecipInfo
-recipient1['signedDataRecipInfo'] = certRecipInfo # ?
-recipient1['rekRecipInfo'] = certRecipInfo # ?
-
-# === SequenceOfRecipientInfo ===
-recipients = SequenceOfRecipientInfo()
-recipients.append(recipient1)
-
-# === EncryptedData ===
-enc_data = EncryptedData()
-enc_data['recipients'] = recipients
-enc_data['ciphertext'] = symmCiphertext
+# === SIGNED DATA ===
+signed_data = SignedData()
+signed_data['hashId'] = hashAlg
+signed_data['tbsData'] = tbs_data
+signed_data['signer'] = signer
+signed_data['signature'] = signature
 
 # === Ieee1609Dot2Content ===
 ieee_content = Ieee1609Dot2Content()
-ieee_content['encryptedData'] = enc_data
+ieee_content['signedData'] = signed_data
 
 # === Ieee1609Dot2Data ===
 ieee_data = Ieee1609Dot2Data()
