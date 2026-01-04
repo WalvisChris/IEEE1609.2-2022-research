@@ -251,10 +251,101 @@ class ToBeSignedData(univ.Sequence):
         namedtype.NamedType('headerInfo', HeaderInfo())
     )
 
+# verplaatst vanwegen circular dependency
+class Time32(Uint32):
+    pass
+
+# verplaatst vanwegen circular dependency
+class Duration(univ.Choice):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('microseconds', Uint16()),
+        namedtype.NamedType('milliseconds', Uint16()),
+        namedtype.NamedType('seconds', Uint16()),
+        namedtype.NamedType('minutes', Uint16()),
+        namedtype.NamedType('hours', Uint16()),
+        namedtype.NamedType('sixtyHours', Uint16()),
+        namedtype.NamedType('years', Uint16())
+    )
+
+# verplaatst vanwegen circular dependency
+class ValidityPeriod(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('start', Time32()),
+        namedtype.NamedType('duration', Duration())
+    )
+
+# verplaatst vanwegen circular dependency
+class LinkageValue(univ.OctetString):
+    subtypeSpec=constraint.ValueSizeConstraint(9, 9)
+
+# verplaatst vanwegen circular dependency
+class GroupLinkageValue(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('jValue', univ.OctetString(subtypeSpec=constraint.ValueRangeConstraint(4, 4))),
+        namedtype.NamedType('Value', univ.OctetString(subtypeSpec=constraint.ValueRangeConstraint(9, 9)))
+    )
+
+# verplaatst vanwegen circular dependency
+class LinkageData(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('iCert', IValue()),
+        namedtype.NamedType('linkage-value', LinkageValue()),
+        namedtype.OptionalNamedType('group-linkage-value', GroupLinkageValue())
+    )
+
+class Hostname(char.UTF8String):
+    subtypeSpec = constraint.ValueSizeConstraint(0, 255)
+
+# verplaatst vanwegen circular dependency
+class CertificateId(univ.Choice):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('linkageData', LinkageData()),
+        namedtype.NamedType('name', Hostname()),
+        namedtype.NamedType('binaryId', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(1, 64))),
+        namedtype.NamedType('none', univ.Null())
+    )
+
+# extra class vanwegen circular dependency
+class ToBeSignedCertificate(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('id', CertificateId()),
+        namedtype.NamedType('cracaId', HashedId3()),
+        namedtype.NamedType('crlSeries', CrlSeries()),
+        namedtype.NamedType('validityPeriod', ValidityPeriod())
+    )
+# namedtype.NamedType('verifyKeyIndicator', VerificationKeyIndicator()),
+# namedtype.NamedType('appExtensions', SequenceOfAppExtensions()),
+# namedtype.NamedType('certIssueExtensions', SequenceOfCertIssueExtensions())
+
+# extra class vanwegen circular dependency
+class ImplicitCertificate(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('toBeSignedCert', ToBeSignedCertificate()),
+        namedtype.NamedType('signature', univ.Any()) # ?
+    )
+
+# extra class vanwegen circular dependency
+class ExplicitCertificate(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('toBeSignedCert', ToBeSignedCertificate()),
+        namedtype.NamedType('signature', univ.Any()) # ?
+    )
+
+# extra class vanwegen circular dependency
+class Certificate(univ.Choice):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('implicitCert', ImplicitCertificate()),
+        namedtype.NamedType('explicitCert', ExplicitCertificate())
+    )
+
+# extra class vanwegen circular dependency
+class SequenceOfCertficate(univ.SequenceOf):
+    componentType = Certificate()
+
 class SignerIdentifier(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('digest', HashedId8()),
-        namedtype.NamedType('certificate', univ.Any()), # circular dependency
+        namedtype.NamedType('certificate', SequenceOfCertficate()), # circular dependency
         namedtype.NamedType('self', univ.Null())
     )
 
@@ -366,53 +457,6 @@ class IssuerIdentifier(univ.Choice):
         namedtype.NamedType('sha384AndDigest', HashedId8()),
         namedtype.NamedType('sm3AndDigest', HashedId8())
         # TODO more
-    )
-
-class LinkageValue(univ.OctetString):
-    subtypeSpec=constraint.ValueRangeConstraint(9, 9)
-
-class GroupLinkageValue(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-        namedtype.NamedType('jValue', univ.OctetString(subtypeSpec=constraint.ValueRangeConstraint(4, 4))),
-        namedtype.NamedType('Value', univ.OctetString(subtypeSpec=constraint.ValueRangeConstraint(9, 9)))
-    )
-
-class LinkageData(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-        namedtype.NamedType('iCert', IValue()),
-        namedtype.NamedType('linkage-value', LinkageValue()),
-        namedtype.OptionalNamedType('group-linkage-value', GroupLinkageValue())
-    )
-
-class Hostname(char.UTF8String):
-    subtypeSpec = constraint.ValueRangeConstraint(0, 255)
-
-class CertificateId(univ.Choice):
-    componentType = namedtype.NamedTypes(
-        namedtype.NamedType('linkageData', LinkageData()),
-        namedtype.NamedType('name', Hostname()),
-        namedtype.NamedType('binaryId', univ.OctetString(subtypeSpec=constraint.ValueSizeConstraint(1, 64))),
-        namedtype.NamedType('none', univ.Null())
-    )
-
-class Time32(Uint32):
-    pass
-
-class Duration(univ.Choice):
-    componentType = namedtype.NamedTypes(
-        namedtype.NamedType('microseconds', Uint16()),
-        namedtype.NamedType('milliseconds', Uint16()),
-        namedtype.NamedType('seconds', Uint16()),
-        namedtype.NamedType('minutes', Uint16()),
-        namedtype.NamedType('hours', Uint16()),
-        namedtype.NamedType('sixtyHours', Uint16()),
-        namedtype.NamedType('years', Uint16())
-    )
-
-class ValidityPeriod(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-        namedtype.NamedType('start', Time32()),
-        namedtype.NamedType('duration', Duration())
     )
 
 class CircularRegion(univ.Sequence):
@@ -600,6 +644,7 @@ class VerificationKeyIndicator(univ.Choice):
         namedtype.NamedType('reconstructionValue', EccP256CurvePoint())
     )
 
+"""
 class ToBeSignedCertificate(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('id', CertificateId()),
@@ -619,27 +664,7 @@ class ToBeSignedCertificate(univ.Sequence):
         namedtype.NamedType('certIssueExtensions', SequenceOfCertIssueExtensions())
         # namedtype.NamedType('certRequestExtension')
     )
-
-class CertificateBase(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-        namedtype.NamedType('version',  Uint8()),
-        namedtype.NamedType('type', CertificateType()),
-        namedtype.NamedType('issuer', IssuerIdentifier()),
-        namedtype.NamedType('toBeSigned', ToBeSignedCertificate()),
-        namedtype.OptionalNamedType('signature', Signature())
-    )
-
-Certificate = CertificateBase
-
-class SequenceOfCertificate(univ.SequenceOf):
-    componentType = Certificate
-
-class SequenceOfCertificateBase(univ.SequenceOf):
-    componentType = Certificate()
-
-# class ImplicitCertificate(CertificateBase)
-
-# class ExplicitCertificate(CertificateBase)
+"""
 
 # --- End of Certificates ---
 

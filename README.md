@@ -869,4 +869,28 @@ uncompressedP384 ::= SEQUENCE {
     x OCTET STRING (SIZE (48)),
     y OCTET STRING (SIZE (48))
 }
+
+ToBeSignedCertificate ::= SEQUENCE {
+    id              CertificateId,
+    cracaId         HashedId3,
+    crlSeries       CrlSeries,
+    validityPeriod  ValidityPeriod
+}
+
+ImplicitCertificate ::= SEQUENCE {
+    toBeSignedCert  ToBeSignedCertificate,
+    signature       ANY
+}
+
+ExplicitCertificate ::= SEQUENCE {
+    toBeSignedCert  ToBeSignedCertificate,
+    signature       ANY
+}
+
+Certificate ::= CHOICE {
+    implicitCert    ImplicitCertificate,
+    explicitCert    ExplicitCertificate
+}
+
+SequenceOfCertificate ::= SEQUENCE OF CERTIFICATE
 ```
