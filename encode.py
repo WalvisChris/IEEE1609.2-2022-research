@@ -31,3 +31,5 @@ if __name__ == "__main__":
             terminal.printASN1(ieee.encodeEnveloped(payload))
         case _:
             terminal.text("Invalid content type.", color="red")
+    
+    

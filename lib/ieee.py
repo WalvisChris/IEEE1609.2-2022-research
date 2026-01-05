@@ -17,7 +17,12 @@ def encodeUnsecured(payload: str) -> bytes:
     return finalBytes
 
 def encodeSigned(payload: str) -> bytes:
+    # Variables
     payload_bytes = payload.encode('utf-8')
+    GENERATION_TIME = int(time.time() * 1_000_000)
+    EXPIRY_TIME = GENERATION_TIME + 10_000_000
+    RAW_HASH_BYTES = hashlib.sha256(payload_bytes).digest()
+
 
     # === HEADER INFO ===
     """
@@ -26,9 +31,6 @@ def encodeSigned(payload: str) -> bytes:
     PSID word volgens IEEE 1609.12 gedefinieerd als INTEGER.
     Wij gebruiken 22031278 (studentnummer) als placeholder voorbeeld.
     """
-    GENERATION_TIME = int(time.time() * 1_000_000)
-    EXPIRY_TIME = GENERATION_TIME + 10_000_000
-
     headerInfo = HeaderInfo()
     headerInfo['psid'] = 22031278 # PLACEHOLDER
     headerInfo['generationTime'] = GENERATION_TIME
@@ -46,8 +48,6 @@ def encodeSigned(payload: str) -> bytes:
     HashedData bevat de hash van de payload.
     Wij maken gebruik van SHA256 waarbij een groote van 32 bytes hoort.
     """
-    RAW_HASH_BYTES = hashlib.sha256(payload_bytes).digest()
-
     hashed_data = HashedData()
     hashed_data['sha256HashedData'] = RAW_HASH_BYTES
 

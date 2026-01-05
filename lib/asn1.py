@@ -61,14 +61,12 @@ class HashAlgorithm(univ.Enumerated):
         ('sha256', 0),
         ('sha384', 1),
         ('sm3', 2)
-        # TODO meer algoritmen
     )
 
 class SymmAlgorithm(univ.Enumerated):
     namedValues = namedval.NamedValues(
         ('aes128Ccm', 0),
         ('sm4Ccm', 1)
-        # TODO meer algoritmen
     )
 
 class HashedId3(univ.OctetString):
@@ -93,7 +91,6 @@ class EncryptionKey(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('aes128Ccm', univ.OctetString(subtypeSpec=constraint.ValueRangeConstraint(16, 16))),
         namedtype.NamedType('sm4Ccm', univ.OctetString(subtypeSpec=constraint.ValueRangeConstraint(16, 16)))
-        # TODO more algorithms
     )
 
 # extra class for fix
@@ -131,9 +128,7 @@ class EccP384CurvePoint(univ.Choice):
 class BasePublicEncryptionKey(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('eciesNistP256', EccP256CurvePoint()),
-        # TODO namedtype.NamedType('eciesBrainpoolP256r1'),
         namedtype.NamedType('ecencSm2', EccP256CurvePoint())
-        # TODO more curves
     )
 
 class PublicEncryptionKey(univ.Sequence):
@@ -167,12 +162,12 @@ class Signature(univ.Choice):
         namedtype.NamedType('ecdsaBrainpoolP384r1Signature', EcdsaP384Signature()),
         namedtype.NamedType('ecdsaNist384Signature', EcdsaP384Signature()),
         namedtype.NamedType('sm2Signature', EcdsaP256Signature()),
-        # TODO more
     )
 
 class NinetyDegreeInt(univ.Integer):
     subtypeSpec = constraint.ValueRangeConstraint(-900000000, 900000001)
-    # TODO unknown = 900000001
+
+# TODO unknown = 900000001
 
 class KnownLatitude(NinetyDegreeInt):
     pass
@@ -184,7 +179,8 @@ class Latitude(NinetyDegreeInt):
 
 class OneEightyDegreeInt(univ.Integer):
     subtypeSpec = constraint.ValueRangeConstraint(-1799999999, 1800000001)
-    # TODO unknown = 1800000001
+
+# TODO unknown = 1800000001
 
 class KnownLongitude(OneEightyDegreeInt):
     pass
@@ -242,7 +238,6 @@ class SignedDataPayload(univ.Sequence):
         namedtype.OptionalNamedType('data', univ.Any()),  # circular dependency
         namedtype.OptionalNamedType('extDataHash', HashedData()),
         namedtype.OptionalNamedType('omitted', univ.Null()),
-        # TODO meer types
     )
 
 class ToBeSignedData(univ.Sequence):
@@ -346,7 +341,7 @@ class SignerIdentifier(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('digest', HashedId8()),
         namedtype.NamedType('certificate', SequenceOfCertficate()), # circular dependency
-        namedtype.NamedType('self', univ.Null())
+        namedtype.NamedType('self', univ.Any())
     )
 
 class SignedData(univ.Sequence):
@@ -367,7 +362,6 @@ class SymmetricCiphertext(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('aes128ccm', One28BitCcmCiphertext()),
         namedtype.NamedType('sm4Ccm', One28BitCcmCiphertext())
-        # TODO more
     )
 
 class EciesP256EncryptedKey(univ.Sequence):
@@ -389,7 +383,6 @@ class EncryptedDataEncryptionKey(univ.Choice):
         namedtype.NamedType('eciesNistP256', EciesP256EncryptedKey()),
         namedtype.NamedType('eciesBrainpoolP256r1', EciesP256EncryptedKey()),
         namedtype.NamedType('ecencSm2256', EcencP256EncryptedKey())
-        # TODO more
     )
 
 class PreSharedKeyRecipientInfo(HashedId8):
@@ -431,7 +424,6 @@ class Ieee1609Dot2Content(univ.Choice):
         namedtype.NamedType('signedData', SignedData()),
         namedtype.NamedType('encryptedData', EncryptedData()),
         namedtype.NamedType('signedX509CertificateRequest', Opaque())
-        # TODO meer datatypes
     )
 
 class Ieee1609Dot2Data(univ.Sequence):
@@ -456,7 +448,6 @@ class IssuerIdentifier(univ.Choice):
         namedtype.NamedType('self', HashAlgorithm()),
         namedtype.NamedType('sha384AndDigest', HashedId8()),
         namedtype.NamedType('sm3AndDigest', HashedId8())
-        # TODO more
     )
 
 class CircularRegion(univ.Sequence):
@@ -506,7 +497,6 @@ class IdentifierdRegion(univ.Choice):
         namedtype.NamedType('countryOnly', UnCountryId()),
         namedtype.NamedType('counrtyAndRegions', CountryAndRegions()),
         namedtype.NamedType('countryAndSubregions', CountryAndSubregions())
-        # TODO more
     )
 
 class SequenceOfIdentifiedRegion(univ.SequenceOf):
@@ -518,7 +508,6 @@ class GeographicRegion(univ.Choice):
         namedtype.NamedType('rectangularRegion', SequenceOfRectangularRegion()),
         namedtype.NamedType('polygonalRegion', PolygonalRegion()),
         namedtype.NamedType('identifiedRegion', SequenceOfIdentifiedRegion())
-        # TODO more
     )
 
 class SubjectAssurance(univ.OctetString):
@@ -531,7 +520,6 @@ class ServiceSpecificPermissions(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('opaque', univ.OctetString()),
         namedtype.NamedType('bitmapSsp', BitmapSsp())
-        # TODO more
     )
 
 class PsidSsp(univ.Sequence):
@@ -554,7 +542,6 @@ class SspRange(univ.Choice):
         namedtype.NamedType('opaque', SequenceOfOctetString()),
         namedtype.NamedType('all', univ.Null()),
         namedtype.NamedType('bitmapSspRange', BitmapSspRange())
-        # TODO more
     )
 
 class PsidSspRange(univ.Sequence):
@@ -570,7 +557,6 @@ class SubjectPermissions(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('explicit', SequenceOfPsidSspRange()),
         namedtype.NamedType('all', univ.Null())
-        # TODO more
     )
 
 class EndEntityType(univ.BitString):
@@ -635,7 +621,6 @@ class PublicVerificationKey(univ.Choice):
         namedtype.NamedType('ecdsaBrainpoolP384r1', EccP256CurvePoint()),
         namedtype.NamedType('ecdsaNistP384', EccP256CurvePoint()),
         namedtype.NamedType('ecsigSm2', EccP256CurvePoint()),
-        # TODO more
     )
 
 class VerificationKeyIndicator(univ.Choice):
@@ -706,14 +691,12 @@ etsiTs102941DeltaCtlRequestId = ExtId(2)
 class CrlPriorityInfo(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.OptionalNamedType('priority', Uint8())
-        # TODO more
     )
 
 class HashBasedRevocationInfo(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('id', HashedId10()),
         namedtype.NamedType('expiry', Time32())
-        # TODO more
     )
 
 class SequenceOfHashBasedRevocationInfo(univ.SequenceOf):
@@ -723,7 +706,6 @@ class ToBeSignedHashIdCrl(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('crlSerials', Uint32()),
         namedtype.NamedType('entries', SequenceOfHashBasedRevocationInfo())
-        # TODO more
     )
 
 class LaId(univ.OctetString):
@@ -739,7 +721,6 @@ class IndividualRevocation(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('linkageSeed1', LinkageSeed()),
         namedtype.NamedType('linkageSeed2', LinkageSeed())
-        # TODO more
     )
 
 class SequenceOfIndividualRevocation(univ.SequenceOf):
@@ -750,7 +731,6 @@ class IMaxGroup(univ.Sequence):
         namedtype.NamedType('iMax', Uint16()),
         namedtype.NamedType('contents', SequenceOfIndividualRevocation()),
         namedtype.OptionalNamedType('singleSeed', SequenecofLinkageSeed())
-        # TODO more
     )
 
 class SequenceOfIMaxGroup(univ.SequenceOf):
@@ -761,7 +741,6 @@ class LAGroup(univ.Sequence):
         namedtype.NamedType('la1Id', LaId()),
         namedtype.NamedType('la2Id', LaId()),
         namedtype.NamedType('contents', SequenceOfIMaxGroup())
-        # TODO more
     )
 
 class SequenceOfLAGroup(univ.SequenceOf):
@@ -771,7 +750,6 @@ class JMaxGroup(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('jmax', Uint8()),
         namedtype.NamedType('contents', SequenceOfLAGroup())
-        # TODO more
     )
 
 class SequenceofJMaxGroup(univ.SequenceOf):
@@ -784,7 +762,6 @@ class GroupCrlEntry(univ.Sequence):
         namedtype.NamedType('linkageSeed1', LinkageSeed()),
         namedtype.NamedType('la2Id', LaId()),
         namedtype.NamedType('linkageSeed2', LinkageSeed())
-        # TODO more
     )
 
 class SequenceOfGroupCrlEntry(univ.SequenceOf):
@@ -807,7 +784,6 @@ class ToBeSignedLinkageValueCrl(univ.Sequence):
         namedtype.OptionalNamedType('individual', SequenceofJMaxGroup()),
         namedtype.OptionalNamedType('groups', SequenceOfGroupCrlEntry()),
         namedtype.OptionalNamedType('groupSingleSeed', SequenceOfGroupSingleSeedCrlEntry())
-        # TODO more
     )
 
 class ToBeSignedLinkageValueCrlWithAlgIdentifier(univ.Sequence):
@@ -817,7 +793,6 @@ class ToBeSignedLinkageValueCrlWithAlgIdentifier(univ.Sequence):
         namedtype.OptionalNamedType('individual', SequenceofJMaxGroup()),
         namedtype.OptionalNamedType('groups', SequenceOfGroupCrlEntry()),
         namedtype.OptionalNamedType('groupSingleSeed', SequenceOfGroupSingleSeedCrlEntry())
-        # TODO more
     )
 
 class TypeSpecificCrlContents(univ.Choice):
@@ -857,7 +832,6 @@ class LvGenerationFunctionIdentifier(univ.Null):
 class CracaType(univ.Choice):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('certificate', Certificate())
-        # TODO more choices
     )
 
 class PermissibleCrls(univ.SequenceOf):
@@ -868,5 +842,4 @@ class CrlSsp(univ.Sequence):
         namedtype.NamedType('version', Uint8()),
         namedtype.NamedType('associatedCraca', CracaType()),
         namedtype.NamedType('crls', PermissibleCrls())
-        # TODO more
     )

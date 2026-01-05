@@ -74,7 +74,7 @@ class TerminalInterface:
     def demoLog(self, title: str, text: str, title_color="white", text_color="white"):
         title_color_code = self.COLORS.get(title_color.lower(), self.COLORS["white"])
         text_color_code = self.COLORS.get(text_color.lower(), self.COLORS["white"])
-        print(f"[{title_color_code}{title}{self.RESET}]:\n{text_color_code}{text}{self.RESET}")
+        print(f"[{title_color_code}{title}{self.RESET}]: {text_color_code}{text}{self.RESET}")
 
     def empty(self, lines: int = 1):
         print("\n" * lines, end="")
